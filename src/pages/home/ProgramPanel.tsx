@@ -58,7 +58,7 @@ export function ProgramPanel() {
       {programs.map(item => <option key={item.id} value={item.id}>{item.title[locale]}</option>)}
       <option value="custom" disabled={!customResult.ok}>{t.customProgram}</option>
     </select>
-    <details className="program-description" open>
+    <details className="program-description">
       <summary>{locale === 'ja' ? 'プログラムの説明' : 'Program description'}</summary>
       {(custom ? t.customDescription : program.description[locale]).split('\n\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}
     </details>

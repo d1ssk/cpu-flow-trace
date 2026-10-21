@@ -11,7 +11,7 @@ import './td4.css';
 export function CpuWorkspace() { return <CpuProvider><Workspace /></CpuProvider>; }
 function Workspace() {
   const { locale } = useLocale(); const m = cpuMessages(locale);
-  const [open, setOpen] = useState(() => !window.matchMedia('(max-width: 900px)').matches);
+  const [open, setOpen] = useState(true);
   return <section className="td4-workspace" aria-label="TD4">
     <div className="td4-workspace-heading"><strong>TD4 · 4-bit CPU</strong>
       <TransistorLegend />

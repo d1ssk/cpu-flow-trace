@@ -25,6 +25,8 @@ test('home defaults to MOS with power, loads only that construction, and exposes
   await expect(page.locator('[data-module="IN"] .module-box')).toHaveCSS('fill', 'rgb(252, 252, 250)');
   await expect(page.getByRole('heading', { level: 1 })).toHaveCSS('position', 'absolute');
   await expect(page.getByLabel('Choose a sample')).toHaveValue('counter');
+  await expect(page.locator('#home-program')).toBeVisible();
+  await expect(page.locator('.program-description')).toHaveJSProperty('open', false);
   await expect(page.getByLabel('Choose a sample').locator('option:not(:disabled)')).toHaveCount(6);
   await expect(page.getByLabel('Speed', { exact: true })).toHaveValue('1');
   await expect(page.getByLabel('Speed', { exact: true }).locator('option')).toHaveText(['0.125×', '0.25×', '0.5×', '1×', '2×', '4×']);
@@ -221,19 +223,22 @@ test('assembly editing validates, leaves drafts unapplied, executes the compiled
   await expect(page.getByLabel('アセンブリのソース')).toHaveValue('OUT 8\nJMP 0');
 });
 
-test('mobile starts with circuit first, program can be expanded and zoom stays within local scrolling', async ({ page }) => {
+test('mobile shows the program below the circuit with its description collapsed and zoom stays within local scrolling', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 }); await home(page);
-  await expect(page.locator('#home-program')).toBeHidden();
+  await expect(page.locator('#home-program')).toBeVisible();
+  await expect(page.locator('.program-description')).toHaveJSProperty('open', false);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   expect(await page.getByTestId('circuit-scroll').evaluate(el => el.scrollWidth > el.clientWidth)).toBe(true);
   await page.getByRole('button', { name: 'Fit circuit', exact: true }).click();
-  await page.getByRole('button', { name: 'Show program', exact: true }).click();
   await expect(page.getByLabel('Choose a sample')).toBeVisible();
   await page.getByLabel('Choose a sample').selectOption('input-output'); await ready(page);
   const y = await page.locator('.td4-circuit').boundingBox(); const program = await page.locator('.td4-program').boundingBox();
   expect(program!.y).toBeGreaterThan(y!.y);
   await page.getByRole('button', { name: 'Collapse program', exact: true }).click();
+  await expect(page.locator('#home-program')).toBeHidden();
+  await page.getByRole('button', { name: 'Show program', exact: true }).click();
+  await expect(page.locator('#home-program')).toBeVisible();
   await page.screenshot({ path: 'test-results/home-mos-mobile.png', fullPage: true });
 });
 
