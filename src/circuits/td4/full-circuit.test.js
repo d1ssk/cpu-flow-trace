@@ -7,7 +7,7 @@ import geometry from '../../simulator/td4/geometry.js';
 import transport from '../../simulator/td4/transport.js';
 import {programs as samples} from '../../td4/programs/index.ts';
 import {encode} from '../../td4/instructions.ts';
-const names={'counter':'counter','led-blink':'blink','input-output':'input','ramen-timer':'ramen'};
+const names={'counter':'counter','led-blink':'blink','input-output':'input','kitchen-timer':'kitchen'};
 const programs=Object.fromEntries(samples.map(p=>[names[p.id]??p.id,{name:p.title.en,bytes:p.lines.map(encode)}]));
 const {TD4Circuit,definition}=cpu;
 const {lengthOf}=geometry;
@@ -33,7 +33,7 @@ for(const view of ['module','nand','mos-short']){
       const s=new DetailedTD4Circuit(programs[preset].bytes,view),reference=new TD4Circuit(programs[preset].bytes);
       if(preset==='input')for(const sim of [s,reference]){sim.setInput('I0',1);sim.setInput('I3',1);}
       settle(s);settle(reference);
-      for(let i=0;i<(preset==='ramen'?260:24);i++){
+      for(let i=0;i<(preset==='kitchen'?260:24);i++){
         assert.ok(s.requestCycle());reference.requestCycle();settle(s);settle(reference);
         assert.equal(snapshot(s),snapshot(reference),`${preset} cycle ${i}`);
       }

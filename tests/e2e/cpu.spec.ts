@@ -37,16 +37,18 @@ test('home defaults to MOS with power, loads only that construction, and exposes
   expect(await page.locator('[data-detail-wire] .wire-base').first().evaluate(el => getComputedStyle(el).strokeWidth)).toBe('1.3px');
   await expect(page.getByTestId('cycle-count')).toHaveText('0 instructions completed');
   await page.screenshot({ path: 'test-results/home-mos-en.png', fullPage: true });
-  for (const [id, length] of [['counter', 5], ['led-blink', 10], ['input-output', 3], ['double-input', 8], ['half-input', 8], ['ramen-timer', 16]] as const) {
+  for (const [id, length] of [['counter', 5], ['led-blink', 10], ['input-output', 3], ['double-input', 8], ['half-input', 8], ['kitchen-timer', 10]] as const) {
     await page.getByLabel('Choose a sample').selectOption(id); await ready(page);
     await expect(page.locator('.assembly-table tbody tr')).toHaveCount(length);
     await expect(page.locator('[data-rom-word]').first()).toHaveAttribute('aria-label', /00: [01]{8}/);
   }
   await page.getByRole('tab', { name: 'C-like', exact: true }).click();
-  await expect(page.getByRole('tabpanel')).toContainText('uint4_t a = 0');
+  await expect(page.getByLabel('Choose a sample').locator('option:checked')).toHaveText('Kitchen timer');
+  await expect(page.getByRole('tabpanel')).toContainText('uint4_t b = input()');
   await page.getByRole('link', { name: '日本語', exact: true }).click();
-  await expect(page.getByLabel('サンプルを選ぶ')).toHaveValue('ramen-timer');
-  await expect(page.getByRole('tabpanel')).toContainText('uint4_t a = 0');
+  await expect(page.getByLabel('サンプルを選ぶ')).toHaveValue('kitchen-timer');
+  await expect(page.getByLabel('サンプルを選ぶ').locator('option:checked')).toHaveText('キッチンタイマー');
+  await expect(page.getByRole('tabpanel')).toContainText('uint4_t b = input()');
   await page.locator('.instruction-reference summary').click();
   await expect(page.locator('.instruction-entry')).toHaveCount(12);
 });
@@ -256,13 +258,13 @@ test('nine module experiments support all four views, inspection, inputs and dee
 });
 
 test('home selection opens the corresponding independent module experiment', async ({ page }) => {
-  await home(page, '?view=overview&program=ramen-timer');
+  await home(page, '?view=overview&program=kitchen-timer');
   await page.locator('[data-module="ALU"]').focus(); await page.keyboard.press('Enter');
   await page.getByRole('link', { name: 'Explore this module', exact: false }).click();
   await expect(page.locator('h1')).toHaveText('ALU · 4 bit ADD');
   await expect(page.locator('[data-part-module]').first()).toBeVisible();
   await page.getByRole('link', { name: 'Back to the CPU', exact: false }).click(); await ready(page);
-  await expect(page.getByLabel('Choose a sample')).toHaveValue('ramen-timer');
+  await expect(page.getByLabel('Choose a sample')).toHaveValue('kitchen-timer');
 });
 
 test('DFF experiment captures on the clock and retains its input and held value across constructions', async ({ page }) => {

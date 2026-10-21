@@ -15,7 +15,8 @@ function savedSource() {
 export function ProgramPanel() {
   const { locale, t } = useLocale();
   const [params, setParams] = useSearchParams();
-  const program = programs.find(item => item.id === params.get('program')) ?? programs[0];
+  const requestedProgram = params.get('program');
+  const program = programs.find(item => item.id === (requestedProgram === 'ramen-timer' ? 'kitchen-timer' : requestedProgram)) ?? programs[0];
   const [customSource, setCustomSource] = useState(savedSource);
   const customResult = assemble(customSource);
   const custom = params.get('program') === 'custom' && customResult.ok;
@@ -57,7 +58,10 @@ export function ProgramPanel() {
       {programs.map(item => <option key={item.id} value={item.id}>{item.title[locale]}</option>)}
       <option value="custom" disabled={!customResult.ok}>{t.customProgram}</option>
     </select>
-    <div className="program-description">{(custom ? t.customDescription : program.description[locale]).split('\n\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div>
+    <details className="program-description" open>
+      <summary>{locale === 'ja' ? 'プログラムの説明' : 'Program description'}</summary>
+      {(custom ? t.customDescription : program.description[locale]).split('\n\n').map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+    </details>
     <div className="program-actions">
       <button onClick={() => edit()}>{t.editAssembly}</button>
       <button onClick={() => edit(true)}>{t.newProgram}</button>

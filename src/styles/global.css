@@ -90,6 +90,8 @@ h1, h2, h3, p { margin: 0; }
 .program-panel { min-width: 0; padding-top: 8px; }
 .program-select { width: 100%; font-size: 13px; padding: 6px 0; }
 .program-description { font-size: 12px; color: var(--secondary); line-height: 1.8; margin: 10px 0 14px; }
+.program-description summary { cursor: pointer; padding: 4px 0; }
+.program-description[open] summary { margin-bottom: 6px; }
 .program-description p { margin: 0 0 8px; overflow-wrap: anywhere; }
 .code-tabs { display: flex; gap: 20px; }
 .code-tabs button { font-size: 12px; color: var(--secondary); padding: 8px 0; border-bottom: 1px solid transparent; border-radius: 0; }

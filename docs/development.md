@@ -100,4 +100,4 @@ The original workbench keeps its own commands (`generate:td4-details`, `watch:td
 
 ## Sample program sources
 
-The standard TD4 versions of the blinking LED and ramen timer programs come from [this TD4 implementation page](https://xyama.sakura.ne.jp/hp/4bitCPU_TD4.html). The C-like representations are explanatory pseudocode, not executable inputs to the simulator.
+The standard TD4 blinking LED program comes from [this TD4 implementation page](https://xyama.sakura.ne.jp/hp/4bitCPU_TD4.html). The kitchen timer uses the supplied ten-instruction assembly: it reads INPUT once, counts B up to overflow in 10-instruction stages, then blinks all output LEDs. The C-like representations are explanatory pseudocode, not executable inputs to the simulator.

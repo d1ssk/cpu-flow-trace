@@ -3,6 +3,7 @@ import powerLayout from '../../circuits/td4/power-layout.js';
 import parts from './part-view.js';
 import {hex,binary,disassemble} from '../../td4/format';
 import {localizeSvg} from './svg-locale';
+import {overviewRegisters} from './overview-registers';
 const {definition,point}=layout;
 const {modules,ports,wires,width,height}=definition;
 const byId=Object.fromEntries(modules.map(m=>[m.id,m]));
@@ -47,9 +48,10 @@ export function drawCpu(svg,sim,view,locale){
   function drawModule(m) {
     if(sim.parts?.[m.id])return `<g class="module detail-circuit" data-module="${m.id}" data-detail-root="${m.id}" transform="translate(${m.x} ${m.y})" role="button" tabindex="0" aria-label="${m.title}の詳細回路"><title>${m.title}</title>${parts.draw(sim.parts[m.id],view)}</g>`;
 
-    const {id,x,y,width:w,height:h,title}=m;
+    const {id,x,y,width:w,height:h}=m;
+    const title=view==='overview'?(overviewRegisters[id]?.title??m.title):m.title;
     const titleY=y+(id==='ROM'?17:id==='CLOCK'?15:registers.includes(id)?30:['IN','OUT'].includes(id)?20:24);
-    let markup=`<g class="module" data-module="${id}" tabindex="0" role="button" aria-pressed="false" aria-label="${title}の接続を確認"><title>${title}</title><rect class="module-box ${id==='OUT'?'output-box':''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="4"/>${id==='ROM'?text(x+16,titleY,title,'rom-title','start'):text(x+w/2,titleY,title,id==='CF'?'compact-title':id==='OUT'?'module-title output-title':'module-title')}`;
+    let markup=`<g class="module" data-module="${id}" tabindex="0" role="button" aria-pressed="false" aria-label="${title}の接続を確認"><title>${title}</title><rect class="module-box ${id==='OUT'?'output-box':''}" x="${x}" y="${y}" width="${w}" height="${h}" rx="4"/>${id==='ROM'?text(x+16,titleY,title,'rom-title','start'):text(x+w/2,titleY,title,id==='OUT'?'module-title output-title':'module-title')}`;
     if(id==='ROM')markup+=`<text x="${x+w-16}" y="${y+17}" class="rom-current" text-anchor="end" data-rom-current></text>`+romCells(m);
     else if(registers.includes(id))markup+=bitCells(m,id==='CF'?1:4);
     else if(id==='IN'||id==='OUT'){

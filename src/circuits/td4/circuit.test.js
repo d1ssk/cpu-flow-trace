@@ -7,7 +7,7 @@ import geometry from '../../simulator/td4/geometry.js';
 import transport from '../../simulator/td4/transport.js';
 import {programs as samples} from '../../td4/programs/index.ts';
 import {encode} from '../../td4/instructions.ts';
-const names={'counter':'counter','led-blink':'blink','input-output':'input','ramen-timer':'ramen'};
+const names={'counter':'counter','led-blink':'blink','input-output':'input','kitchen-timer':'kitchen'};
 const programs=Object.fromEntries(samples.map(p=>[names[p.id]??p.id,{name:p.title.en,bytes:p.lines.map(encode)}]));
 const {TD4Circuit,definition}=cpu;
 const {lengthOf}=geometry;
@@ -15,6 +15,26 @@ const {PROPAGATION_SPEED}=transport;
 function settle(sim) {let count=0;while(sim.busy){assert.ok(++count<1000,'CPU must settle');sim.next();}}
 function cycle(sim) {settle(sim);assert.equal(sim.requestCycle(),true);settle(sim);}
 function input(sim,value) {for(let bit=0;bit<4;bit++)sim.setInput(`I${bit}`,(value>>bit)&1);settle(sim);}
+test('kitchen timer counts 16 minus input stages, reads input once, then blinks indefinitely',()=>{
+  for(let n=0;n<16;n++){
+    const sim=new TD4Circuit(programs.kitchen.bytes);input(sim,n);
+    cycle(sim);assert.equal(sim.snapshot().b,n);
+    input(sim,(n+1)%16);
+    for(let b=n;b<16;b++){
+      assert.equal(sim.snapshot().pc,1);
+      cycle(sim);assert.equal(sim.value('OUT.data'),b);
+      for(let i=0;i<9;i++)cycle(sim);
+      assert.equal(sim.snapshot().b,(b+1)%16);
+    }
+    assert.equal(sim.cycles,1+10*(16-n));
+    assert.equal(sim.snapshot().pc,7);
+    for(let repeat=0;repeat<3;repeat++){
+      cycle(sim);assert.equal(sim.value('OUT.data'),0);
+      cycle(sim);assert.equal(sim.value('OUT.data'),15);
+      cycle(sim);assert.equal(sim.snapshot().pc,7);
+    }
+  }
+});
 test('double and half programs calculate all 16 inputs and hold their result at the final address',()=>{
   for(const [id,result] of [['double-input',n=>n*2%16],['half-input',n=>Math.floor(n/2)]]){
     for(let n=0;n<16;n++){
@@ -48,7 +68,7 @@ test('all 256 instruction bytes match hardware decode from nonzero registers and
     cycle(sim);assert.deepEqual(sim.snapshot(),reference(before,byte,6),`byte ${byte}, C=${carry}`);
   }
 });
-test('sample programs execute via the netlist, including carry-dependent ramen loops',()=>{
+test('sample programs execute via the netlist, including carry-dependent kitchen timer loops',()=>{
   for(const program of Object.values(programs)) {
     const sim=new TD4Circuit(program.bytes);let expected={a:0,b:0,out:0,pc:0,carry:0};
     for(let i=0;i<250;i++) {

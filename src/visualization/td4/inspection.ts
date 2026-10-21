@@ -2,6 +2,7 @@ import type { Cpu, Part } from '../../circuits/td4/runtime';
 import type { Locale } from '../../i18n';
 import layout from '../../circuits/td4/layout.js';
 import { binary } from '../../td4/format';
+import { overviewRegisters } from './overview-registers';
 export type Selection = { kind: 'module' | 'wire'; id: string } | { kind: 'detail'; module: string; attribute: string; id: string };
 export function pick(target: Element): Selection | null {
   const root = target.closest<SVGElement>('[data-detail-root]');
@@ -40,5 +41,6 @@ export function inspectCpu(sim: Cpu, selected: Selection, locale: Locale): strin
     return `${w.from} → ${w.to} · ${locale === 'ja' ? '送信' : 'Source'} ${level(w.source)} → ${locale === 'ja' ? '到着' : 'Arrived'} ${level(w.arrived)} · ${locale === 'ja' ? '遅延' : 'Travel time'} ${(w.delay / 1000).toFixed(3)} s`;
   }
   const ports = Object.values(layout.definition.ports) as { id: string; module: string; width: number }[];
-  return `${selected.id} · ${ports.filter(p => p.module === selected.id && p.id !== 'CLK').map(p => `${p.id.split('.')[1]}=${binary(sim.value(p.id), p.width)}`).join(' · ')}`;
+  const register = !sim.parts ? overviewRegisters[selected.id] : undefined;
+  return `${register ? `${register.title} — ${register.description}` : selected.id} · ${ports.filter(p => p.module === selected.id && p.id !== 'CLK').map(p => `${p.id.split('.')[1]}=${binary(sim.value(p.id), p.width)}`).join(' · ')}`;
 }

@@ -1,7 +1,6 @@
 .td4-svg text{font-family:var(--mono);fill:var(--ink);user-select:none;pointer-events:none}
 .td4-svg .module-box{fill:var(--paper);stroke:#667066;stroke-width:1.5}
 .td4-svg .module-title{font-size:14px}
-.td4-svg .compact-title{font-size:11px}
 .td4-svg .module-caption{font-size:12px;fill:#93988e}
 .td4-svg .bit-label{font-size:9px;fill:#93988e}
 .td4-svg .bit-cell{fill:none;stroke:#d9dcd2;stroke-width:1}
