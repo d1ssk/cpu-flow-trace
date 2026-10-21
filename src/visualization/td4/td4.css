@@ -1,0 +1,142 @@
+.td4-svg text{font-family:var(--mono);fill:var(--ink);user-select:none;pointer-events:none}
+.td4-svg .module-box{fill:var(--paper);stroke:#667066;stroke-width:1.5}
+.td4-svg .module-title{font-size:14px}
+.td4-svg .compact-title{font-size:11px}
+.td4-svg .module-caption{font-size:12px;fill:#93988e}
+.td4-svg .bit-label{font-size:9px;fill:#93988e}
+.td4-svg .bit-cell{fill:none;stroke:#d9dcd2;stroke-width:1}
+.td4-svg .port-label{font-size:9px;fill:#737b70}
+.td4-svg .pin{fill:#8d9596;pointer-events:none}
+.td4-svg .junction{fill:#8d9596;stroke:var(--paper);stroke-width:.7;pointer-events:none}
+.td4-svg .wire{fill:none;stroke:var(--wire);stroke-width:1.3;stroke-linejoin:round;stroke-linecap:round;pointer-events:none}
+.td4-svg .wire-clearance{fill:none;stroke:var(--paper);stroke-width:2.8;pointer-events:none}
+.td4-svg .wire-hit{fill:none;stroke:transparent;stroke-width:4;cursor:pointer}
+.td4-svg .wire-group.active .wire,.td4-svg .wire-group:focus-visible .wire,.td4-svg .wire-group:hover .wire{stroke-width:2}
+.td4-svg .wire-group:focus{outline:none}
+.td4-svg .module{cursor:pointer}
+.td4-svg .module:focus{outline:none}
+.td4-svg .module:hover .module-box,.td4-svg .module:focus-visible .module-box,.td4-svg .module.selected .module-box{stroke:var(--accent);stroke-width:2}
+.td4-svg .module.selected .module-box{fill:#faf6f0}
+.td4-svg .module.connected .module-box{stroke:var(--accent)}
+.td4-svg .output-box{fill:#f3f2eb;stroke-width:2}
+.td4-svg .output-title{font-weight:600}
+.td4-svg .clock-glyph{fill:none;stroke:#737b70;stroke-width:1.3;pointer-events:none}
+.td4-svg .wave-layers{pointer-events:none}
+.td4-svg .wire-group.active .wire-clearance,.td4-svg .wire-group:focus-visible .wire-clearance{stroke:#e8d0b0;stroke-width:4}
+.td4-svg .rom-title{font-size:12px}
+.td4-svg .rom-current{font-size:10px}
+.td4-svg .rom-address{font-size:8px;fill:var(--muted)}
+.td4-svg .rom-highlight{fill:transparent;stroke:transparent;stroke-width:.7}
+.td4-svg [data-rom-word].current .rom-highlight{fill:#b7655710;stroke:var(--accent)}
+.td4-svg [data-rom-word].current .rom-address{fill:var(--ink);font-weight:600}
+.td4-svg .io-bit{stroke-width:1}
+.td4-svg .input-bit{fill:var(--paper);stroke:#aeb5a6}
+.td4-svg .output-bit{stroke:#667066}
+.td4-svg .io-state{font-size:13px}
+.td4-svg .io-label{font-size:10px;fill:var(--muted)}
+.td4-svg [data-input]{cursor:pointer}
+.td4-svg [data-input]:focus{outline:none}
+.td4-svg [data-input]:focus-visible .io-bit,.td4-svg [data-input]:hover .io-bit{stroke:var(--ink);stroke-width:2}
+.td4-svg [data-input][aria-disabled="true"]{opacity:.55;cursor:wait}
+.td4-svg .detail-circuit .detail-frame{fill:none;stroke:var(--line);stroke-width:.5}
+.td4-svg .detail-circuit .gate-body{fill:var(--paper);stroke:#667066;stroke-width:.7}
+.td4-svg .detail-circuit .detail-port{font-size:4px}
+.td4-svg .detail-circuit .terminal-hit{stroke-width:2}
+.td4-svg .detail-circuit .module-body{fill:var(--paper);stroke:#667066;stroke-width:.7}
+.td4-svg .detail-circuit .module-body[data-held-value="1"]{fill:var(--high-soft)}
+.td4-svg .detail-circuit .module-title{font-size:6px}
+.td4-svg .detail-circuit .module-pin{font-size:4px;fill:var(--muted)}
+.td4-svg .detail-circuit .decoder-title{font-size:10px}
+.td4-svg .detail-circuit .detail-port{paint-order:stroke;stroke:var(--paper);stroke-width:1.4;stroke-linejoin:round}
+.td4-svg .detail-circuit [role=button]:hover .focus,.td4-svg .detail-circuit [role=button]:focus-visible .focus{stroke-width:.9}
+.td4-svg .detail-circuit .mos-supplies{pointer-events:none}
+.td4-svg .detail-circuit .mos-supplies path{fill:none;stroke-width:1.3}
+.td4-svg .detail-circuit .supply-VDD{stroke:var(--high)}
+.td4-svg .detail-circuit .supply-GND{stroke:var(--low)}
+.td4-svg .detail-circuit .mos-lead,.td4-svg .detail-circuit .mos-channel,.td4-svg .detail-circuit .mos-gate{fill:none;stroke-width:1.3;pointer-events:none}
+/* Inversion bubbles are symbols, not signal wires; retain their open centers. */
+.td4-svg .detail-circuit .mos-bubble{fill:var(--paper);stroke-width:.8;pointer-events:none}
+.td4-svg .detail-circuit .mos-hit{fill:transparent}
+.td4-svg .detail-circuit .wire,.td4-svg .detail-circuit .mos-supplies path,.td4-svg .detail-circuit .mos-lead,.td4-svg .detail-circuit .mos-channel,.td4-svg .detail-circuit .mos-gate{stroke-width:1.3}
+.td4-svg .detail-circuit .clearance{fill:none;stroke:var(--paper);stroke-width:2.8;pointer-events:none}
+.td4-svg .detail-circuit .wire-hit{stroke-width:4}
+.td4-svg .detail-circuit .module-live{font-size:5px}
+.td4-svg .detail-circuit .clock-bay{fill:#f0f0e940;stroke:#c7ccc3;stroke-width:.35;stroke-dasharray:2 2}
+.td4-svg .detail-circuit .terminal-hit{fill:transparent;stroke:transparent}
+.td4-svg .detail-circuit.selected .detail-frame{stroke:var(--accent);stroke-width:1.5}
+.td4-svg .detail-circuit.connected .detail-frame{stroke:var(--accent)}
+.td4-svg .cpu-supplies{pointer-events:none}
+.td4-svg .cpu-supplies path{fill:none;stroke-width:1.3;stroke-linejoin:round}
+.td4-svg .cpu-supplies .supply-VDD{stroke:var(--high);fill:var(--high)}
+.td4-svg .cpu-supplies .supply-GND{stroke:var(--low);fill:var(--low)}
+.td4-svg .cpu-supplies path.supply-VDD,.td4-svg .cpu-supplies path.supply-GND{fill:none}
+.td4-svg .power-label{font-size:10px}
+.td4-workspace { --wire: var(--low); --accent: var(--high); }
+.home-lead { font-size: 15px; line-height: 1.8; margin: 14px 0 24px; }
+.td4-workspace-heading { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 16px; border-bottom: 1px solid var(--line); padding-bottom: 10px; font-size: 12px; }
+.td4-workspace-heading strong { font: 600 13px var(--mono); }
+.td4-transistor-legend { display: flex; align-items: center; justify-content: flex-end; gap: 12px; color: var(--secondary); font-size: 11px; }
+.td4-transistor-key { display: flex; align-items: center; gap: 2px; }
+.td4-transistor-key svg { fill: none; stroke: currentColor; stroke-width: 1.3; flex-shrink: 0; }
+.td4-transistor-key circle { fill: var(--paper); }
+.td4-transistor-key strong { display: block; font: 600 12px var(--mono); }
+.td4-transistor-key small { display: block; font-size: 10px; white-space: nowrap; }
+.td4-module-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 20px; }
+.td4-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 24px; align-items: start; }
+.td4-grid.program-collapsed { grid-template-columns: minmax(0, 1fr); }
+.td4-program { min-width: 0; }
+.td4-program[hidden] { display: none; }
+.td4-program .program-panel { max-width: none; width: 100%; margin: 0; padding-top: 16px; }
+.td4-circuit { min-width: 0; }
+.td4-views { display: flex; align-items: center; justify-content: center; gap: 4px; flex-wrap: wrap; padding: 12px 0 6px; font-size: 12px; }
+.td4-views button { border: 1px solid transparent; }
+.td4-views [aria-pressed=true] { border-color: var(--high); color: var(--high); }
+.td4-power { display: flex; align-items: center; gap: 5px; padding: 0 8px; }
+.td4-power input { accent-color: var(--high); }
+.td4-controls { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px 16px; font-size: 12px; padding: 6px 0; }
+.td4-control-group { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.td4-control-group + .td4-control-group { border-left: 1px solid var(--line); padding-left: 12px; }
+.td4-run { background: var(--high-soft); color: var(--high); }
+.td4-status { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px 16px; font: 11px var(--mono); min-height: 24px; padding: 5px; color: var(--secondary); }
+.td4-scroll { overflow: auto; overscroll-behavior: contain; max-height: 70vh; padding: 12px; width: 100%; }
+.td4-svg { display: block; height: auto; max-width: none; margin: 0 auto; }
+.td4-svg .cpu-boundary { pointer-events: none; }
+.td4-svg .cpu-boundary path { fill: none; stroke: var(--secondary); stroke-width: 1.3; stroke-dasharray: 6 5; }
+.td4-svg .cpu-annotation { pointer-events: none; font-size: 14px; font-weight: 600; paint-order: stroke; stroke: var(--paper); stroke-width: 4; }
+.td4-svg .detail-circuit .inspected .focus { stroke: var(--high); stroke-width: 1.5; }
+.td4-svg .detail-circuit .inspected > .clearance { stroke: #e8d0b0; stroke-width: 4; }
+.td4-canvas-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px 20px; padding: 6px 12px; font-size: 11px; color: var(--secondary); }
+.td4-canvas-footer output { min-width: 45px; text-align: right; font: 11px var(--mono); }
+.td4-inspector { padding: 10px 12px; min-height: 62px; font: 11px/1.8 var(--mono); overflow-wrap: anywhere; border-top: 1px solid var(--line); }
+.td4-inspector a { color: var(--high); text-decoration: underline; }
+.td4-registers { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: center; font: 11px var(--mono); padding: 8px 12px; }
+.td4-registers output { color: var(--high); }
+.td4-notes { padding: 16px 0; color: var(--secondary); font-size: 11px; line-height: 1.6; border-bottom: 1px solid var(--line); }
+.td4-notes p + p { margin-top: 4px; }
+.assembly-table tr.current { background: var(--high-soft); outline: 1px solid var(--high); outline-offset: -1px; }
+.td4-detail-page { padding: 20px 34px; }
+.td4-module-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0; font: 12px var(--mono); }
+.td4-module-nav a { padding: 6px 10px; border: 1px solid var(--line); border-radius: 3px; }
+.td4-module-nav a[aria-current] { color: var(--high); border-color: var(--high); }
+.td4-detail-page h1 { font: 600 22px var(--mono); margin: 20px 0 10px; }
+.td4-detail-page > p { font-size: 13px; line-height: 1.8; color: var(--secondary); }
+.td4-detail-inputs { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; padding: 12px; font: 12px var(--mono); }
+.td4-detail-inputs input { width: 64px; padding: 5px; border: 1px solid var(--line); background: var(--paper); font: inherit; }
+@media (max-width: 900px) {
+  .td4-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .td4-circuit { grid-row: 1; }
+  .td4-program { grid-row: 2; max-width: 500px; width: 100%; margin: auto; }
+}
+@media (max-width: 650px) {
+  .td4-workspace-heading { grid-template-columns: 1fr auto; gap: 8px; }
+  .td4-workspace-heading .td4-transistor-legend { grid-column: 1 / -1; grid-row: 2; justify-self: end; }
+  .home-lead { font-size: 13px; margin: 8px 0 18px; }
+  .td4-controls { gap: 4px; font-size: 11px; }
+  .td4-control-group { justify-content: center; }
+  .td4-control-group + .td4-control-group { border-left: 0; padding-left: 0; }
+  .td4-controls button { padding: 7px; }
+  .td4-views { font-size: 11px; gap: 2px; }
+  .td4-views button { padding: 7px; }
+  .td4-detail-page { padding: 16px; }
+  .td4-scroll { padding: 8px; }
+}

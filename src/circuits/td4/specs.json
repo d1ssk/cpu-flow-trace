@@ -1,0 +1,86 @@
+{
+  "ALU": {
+    "title": "ALU · 4 bit ADD",
+    "ports": {
+      "X": "x",
+      "im": "im",
+      "S": "sum",
+      "C": "cf"
+    }
+  },
+  "CF": {
+    "title": "DFF C · 1 bit",
+    "ports": {
+      "D": "d",
+      "CLK": "clk",
+      "Q": "q"
+    }
+  },
+  "A": {
+    "title": "DFF A · 4 bit",
+    "ports": {
+      "D": "d",
+      "EN": "en",
+      "CLK": "clk",
+      "Q": "q"
+    }
+  },
+  "B": {
+    "title": "DFF B · 4 bit",
+    "ports": {
+      "D": "d",
+      "EN": "en",
+      "CLK": "clk",
+      "Q": "q"
+    }
+  },
+  "PC": {
+    "title": "DFF PC · 4 bit",
+    "ports": {
+      "D": "d",
+      "EN": "en",
+      "CLK": "clk",
+      "Q": "q"
+    }
+  },
+  "R": {
+    "title": "DFF OUT · 4 bit",
+    "ports": {
+      "D": "d",
+      "EN": "en",
+      "CLK": "clk",
+      "Q": "q"
+    }
+  },
+  "MUX": {
+    "title": "MUX · A / B / IN / 0",
+    "ports": {
+      "A": "a",
+      "B": "b",
+      "IN": "input",
+      "SEL": "sel",
+      "Y": "y"
+    }
+  },
+  "DEC": {
+    "title": "DECODER",
+    "ports": {
+      "OP": "op",
+      "C": "cf",
+      "SEL": "sel",
+      "ENA": "enA",
+      "ENB": "enB",
+      "ENOUT": "enR",
+      "JUMP": "jump"
+    }
+  },
+  "NEXT": {
+    "title": "NEXT PC · +1 / JUMP",
+    "ports": {
+      "PC": "pc",
+      "RESULT": "result",
+      "JUMP": "jump",
+      "Y": "y"
+    }
+  }
+}

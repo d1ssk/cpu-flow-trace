@@ -1,0 +1,4 @@
+Tool: built-in image_gen
+Transparent background: true
+
+Create a single favicon icon: a perfect circle divided into two equal interlocking halves by one smooth S-shaped wavy boundary, like a simplified taijitu / yin-yang symbol WITHOUT ANY SMALL DOTS OR INNER CIRCLES. Use exactly two flat solid colors: muted terracotta #b76557 and cool gray #8d9596. No outlines, no gaps between halves, no gradients, no shadows, no texture, no text, no extra objects. Clean precise geometric silhouette, centered square composition, the circle nearly fills the square with only a narrow transparent margin. Background outside the circle is truly transparent. Designed to remain legible at 16x16 and 32x32 pixels.

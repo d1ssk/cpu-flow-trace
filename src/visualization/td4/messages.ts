@@ -1,0 +1,34 @@
+import type { Locale } from '../../i18n';
+const ja = {
+  overview: '全体ブロック', module: 'モジュール', nand: 'NAND', mos: 'MOS', power: '電源線', view: '回路の表示',
+  loading: '回路を読み込んでいます…', retry: '再試行', run: '連続実行', stop: '連続停止',
+  waiting: 'クロック待ち', running: '連続実行', completed: '命令確定', last: '直前', fit: '全体表示',
+  program: 'プログラム', showProgram: 'プログラムを表示', hideProgram: 'プログラムを折りたたむ',
+  detail: 'このモジュールの詳細回路', hint: 'INPUTを切り替え、部品や配線を選んで状態を確認できます。',
+  rule: 'Hは朱色、Lは灰色。点のない交差は非接続。各素子の内部遅延はゼロで、描かれた配線の長さに応じて信号が伝播します。',
+  model: '理想化した学習用モデルで、実ICの内部配置や、物理モデルに基づく信号伝播などを再現するものではありません。',
+  switchNote: '表示構成を変えるとその時点の伝播を完了し、ROM・入力・保持値・命令数を引き継いだ上で、観察時間を0に戻します。',
+  detailSwitchNote: '構成を変えると伝播を完了し、入力と保持値を引き継ぎ、観察時間を0に戻します。電源線だけの切り替えは途中の状態も保持します。',
+  detailHint: '入力値や入力端子を変更し、素子や配線を選んで状態を確認できます。',
+  independent: 'CPU本体から独立した実験回路です。入力を変更して伝播と保持を観察できます。',
+  back: 'CPU全体へ戻る', inputs: '入力値', outputs: '出力値', stable: '安定', details: '詳細回路',
+  io: '外部入出力', inspection: '選択対象', noProgram: 'プログラムを作成して適用してください。',
+  pcNote: '一覧の枠はPCの保持番地。回路内ROMの枠は、配線を経て到着した番地です。',
+};
+const en: Record<keyof typeof ja, string> = {
+  overview: 'Blocks', module: 'Modules', nand: 'NAND', mos: 'MOS', power: 'Power wires', view: 'Circuit view',
+  loading: 'Loading circuit…', retry: 'Retry', run: 'Run continuously', stop: 'Stop continuous run',
+  waiting: 'Waiting for clock', running: 'Running', completed: 'instructions completed', last: 'Previous', fit: 'Fit circuit',
+  program: 'Program', showProgram: 'Show program', hideProgram: 'Collapse program',
+  detail: 'Explore this module', hint: 'Toggle INPUT; select components or wires to inspect their state.',
+  rule: 'H is terracotta; L is gray. Crossings without dots are disconnected. Elements have zero internal delay; signals travel according to the lengths of the drawn wires.',
+  model: 'An idealized educational model. It does not reproduce real IC layouts or signal propagation based on a physical model.',
+  switchNote: 'Changing construction completes the propagation in progress, preserves ROM, inputs, held values and instruction count, and resets observation time to 0.',
+  detailSwitchNote: 'Changing construction finishes propagation, preserves inputs and stored values, and restarts observation time at 0. Toggling power wires preserves signals in transit.',
+  detailHint: 'Change the input values or terminals; select components or wires to inspect them.',
+  independent: 'An experiment independent of the CPU. Change inputs to observe propagation and stored values.',
+  back: 'Back to the CPU', inputs: 'Inputs', outputs: 'Outputs', stable: 'Stable', details: 'Module circuit',
+  io: 'External input and output', inspection: 'Selection', noProgram: 'Create and apply a program.',
+  pcNote: 'The table highlights the held PC address. The circuit ROM highlights the address that has arrived along the wires.',
+};
+export const cpuMessages = (locale: Locale) => locale === 'ja' ? ja : en;

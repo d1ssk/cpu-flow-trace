@@ -1,3 +1,5 @@
+workbench/*
+
 # Logs
 logs
 *.log
@@ -147,3 +149,7 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Browser test artifacts
+/test-results/
+/playwright-report/
