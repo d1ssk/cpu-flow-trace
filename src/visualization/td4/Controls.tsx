@@ -17,6 +17,8 @@ export function CpuControls() {
   function view(value: View) { const next = new URLSearchParams(params); next.set('view', value); setParams(next, { replace: true }); }
   const disabled = state.loading || !!state.error;
   const playing = state.mode !== 'paused';
+  const inputLocked = !playing && !!session.sim?.clockActive;
+  const pendingInput = state.mode === 'paused' && state.busy && state.cycles === 0 && !session.sim?.clockActive;
   return <>
     <ViewControls view={requestedView} disabled={disabled} onChange={view} />
     <div className="td4-controls td4-playback">
@@ -46,7 +48,10 @@ export function CpuControls() {
       <output aria-label={t.time}>{(state.time / 1000).toFixed(2)} s</output>
       {state.last && <span>{m.last}: {hex(state.last.address)} · {disassemble(state.last.byte)}</span>}
     </div>
-    {state.mode === 'paused' && state.busy && state.cycles === 0 && !session.sim?.clockActive && <p className="td4-playback-hint">{m.pendingInput}</p>}
+    <div className="td4-playback-hint td4-input-hint" role="status">
+      <span style={{ visibility: pendingInput ? 'visible' : 'hidden' }} aria-hidden={!pendingInput}>{m.pendingInput}</span>
+      <span id="td4-input-locked" style={{ visibility: inputLocked ? 'visible' : 'hidden' }} aria-hidden={!inputLocked}>{m.inputLocked}</span>
+    </div>
     {state.error && <p role="alert">{state.error} <button onClick={session.retry}>{m.retry}</button></p>}
   </>;
 }

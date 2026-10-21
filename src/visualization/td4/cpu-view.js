@@ -126,7 +126,7 @@ export function drawCpu(svg,sim,view,locale){
   draw();
   localizeSvg(svg,locale);
 
-  function render() {
+  function render(instructionAddress) {
     if(sim.parts)parts.render(sim,detailGraphics);
     for(const {id,line,layers} of graphics) {
       const w=sim.wires[id];line.style.stroke=color(w.initial);
@@ -147,16 +147,17 @@ export function drawCpu(svg,sim,view,locale){
     svg.querySelectorAll('[data-input]').forEach(el=>{
       el.setAttribute('aria-pressed',String(Boolean(sim.value(el.dataset.input))));
       el.setAttribute('aria-disabled',String(sim.clockActive));
+      if(sim.clockActive)el.setAttribute('aria-describedby','td4-input-locked');else el.removeAttribute('aria-describedby');
     });
     svg.querySelectorAll('[data-rom-word]').forEach(el=>{
-      const address=Number(el.dataset.romWord),current=address===sim.value('ROM.addr');
+      const address=Number(el.dataset.romWord),current=address===instructionAddress;
       el.classList.toggle('current',current);
       if(current)el.setAttribute('aria-current','true');else el.removeAttribute('aria-current');
-      const description=`${hex(address)}: ${binary(sim.rom[address],8)} · ${disassemble(sim.rom[address])}${current?(locale==='ja'?' · アクセス中':' · Reading'):''}`;
+      const description=`${hex(address)}: ${binary(sim.rom[address],8)} · ${disassemble(sim.rom[address])}${current?(locale==='ja'?' · 実行対象':' · Current instruction'):''}`;
       el.setAttribute('aria-label',description);el.querySelector('title').textContent=description;
       el.querySelectorAll('[data-rom-bit]').forEach(bit=>bit.style.fill=color((sim.rom[address]>>Number(bit.dataset.romBit))&1));
     });
-    svg.querySelector('[data-rom-current]').textContent=`${hex(sim.value('ROM.addr'))}: ${hex(sim.rom[sim.value('ROM.addr')])}`;
+    svg.querySelector('[data-rom-current]').textContent=`${hex(instructionAddress)}: ${hex(sim.rom[instructionAddress])}`;
     const summaries={MUX:`${['A','B','IN','0'][sim.value('MUX.sel')]} → ${binary(sim.value('MUX.y'),4)}`,ALU:`${sim.value('ALU.x')} + ${sim.value('ALU.im')} = ${sim.value('ALU.sum')} · C ${sim.value('ALU.cf')}`,DEC:`SEL ${binary(sim.value('DEC.sel'),2)} · EN ${['R','B','A'].map(id=>sim.value(`DEC.en${id}`)).join('')} · JMP ${sim.value('DEC.jump')}`,NEXT:`${sim.value('NEXT.pc')} → ${sim.value('NEXT.y')}`};
     svg.querySelectorAll('[data-summary]').forEach(el=>el.textContent=summaries[el.dataset.summary]);
     const clock=svg.querySelector('[data-module="CLOCK"] .clock-glyph');clock.style.stroke=color(sim.value('CLK'));
@@ -182,6 +183,5 @@ function select(selection){
  }
 }
 
- render();
  return {render,select};
 }

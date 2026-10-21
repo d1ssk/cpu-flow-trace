@@ -4,7 +4,7 @@ import { defaultPlaybackSpeed, playbackTimeScale } from './playback';
 export interface Snapshot {
   revision: number; view: View; loading: boolean; error: string | null;
   mode: 'paused' | 'continuous' | 'instruction'; speed: number;
-  time: number; busy: boolean; ready: boolean; cycles: number; pc: number;
+  time: number; busy: boolean; ready: boolean; cycles: number; pc: number; instructionAddress: number;
   last: { address: number; byte: number } | null;
   input: number; output: number; registers: Record<string, number>;
 }
@@ -21,15 +21,19 @@ export class CpuSession {
   constructor(bytes: number[], view: View) {
     this.bytes = [...bytes];
     this.snapshot = { revision: 0, view, loading: true, error: null, mode: 'paused', speed: defaultPlaybackSpeed,
-      time: 0, busy: false, ready: false, cycles: 0, pc: 0, last: null, input: 0, output: 0, registers: {} };
+      time: 0, busy: false, ready: false, cycles: 0, pc: 0, instructionAddress: 0, last: null, input: 0, output: 0, registers: {} };
   }
   subscribe = (fn: () => void) => { this.listeners.add(fn); return () => { this.listeners.delete(fn); }; };
   getSnapshot = () => this.snapshot;
-  getPc = () => this.snapshot.pc;
+  getInstructionAddress = () => this.snapshot.instructionAddress;
   private emit(update: Partial<Snapshot> = {}) {
     const s = this.sim;
     this.snapshot = { ...this.snapshot, ...(s ? { time: s.time, busy: s.busy, ready: s.ready, cycles: s.cycles,
-      pc: s.value('PC.q'), last: s.lastExecuted, input: s.value('IN.q'), output: s.value('OUT.data'), registers: s.snapshot() } : {}), ...update };
+      pc: s.value('PC.q'),
+      // PC bits arrive independently in detailed circuits. Keep the assembly
+      // cursor on the executing instruction until the whole cycle settles.
+      instructionAddress: s.ready ? s.value('PC.q') : this.snapshot.instructionAddress,
+      last: s.lastExecuted, input: s.value('IN.q'), output: s.value('OUT.data'), registers: s.snapshot() } : {}), ...update };
     this.listeners.forEach(fn => fn());
   }
   start() {

@@ -39,7 +39,7 @@ export function CpuCanvas() {
           if (revision !== -1) setSelected(null);
           revision = state.revision;
         }
-        renderer.current?.render();
+        renderer.current?.render(state.instructionAddress);
       } catch (e) { setError(String(e)); }
     }
     update(); const unsubscribe = session.subscribe(update);

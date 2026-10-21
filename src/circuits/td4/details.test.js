@@ -13,6 +13,22 @@ for(const view of ['module','nand','mos'])await api.loadAll(view);
 const views=['module','nand','mos'];
 const set=(sim,id,value)=>{sim.setWord(id,value);settle(sim);};
 const near=(a,b)=>Math.abs(a-b)<1e-7;
+for(const id of ['A','B','PC','R'])for(const view of views){
+  test(`${id} ${view}: bits run from 3 to 0 left to right and capture the matching physical cell`,()=>{
+    const s=create(id,view),bits=[...s.definition.bits].sort((a,b)=>a.x-b.x);
+    assert.deepEqual(bits.map(b=>b.bit),[3,2,1,0]);
+    if(id!=='PC')set(s,'EN',1);
+    for(let bit=0;bit<4;bit++){
+      set(s,'CLK',0);set(s,'D',1<<bit);set(s,'CLK',1);
+      assert.equal(s.word('Q'),1<<bit);
+      for(const cell of bits){
+        const q=s.nodes[`edge:${cell.prefix}Q`];
+        assert.ok(q.x>=cell.x&&q.x<=cell.x+cell.width,'held output belongs to the labeled cell');
+        assert.equal(q.output,+(cell.bit===bit),'one-hot input reaches the matching physical bit');
+      }
+    }
+  });
+}
 for(const id of Object.keys(specs))for(const view of views) {
   test(`${id} ${view}: CPU footprint, exact terminals, real orthogonal wire lengths and connected topology`,()=>{
     const sim=create(id,view),def=sim.definition,m=layout.modules.find(m=>m.id===id),targets=new Set();

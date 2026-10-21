@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import { CpuSession } from './session';
 import type { View } from '../../circuits/td4/runtime';
 
-async function setup(t: TestContext, view: View = 'overview') {
+async function setup(t: TestContext, view: View = 'overview', bytes = [0x60, 0x90, 0xf0]) {
   const keys = ['document', 'requestAnimationFrame', 'cancelAnimationFrame'] as const;
   const original = keys.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)] as const);
   let frame: FrameRequestCallback;
   Object.defineProperty(globalThis, 'document', { configurable: true, value: { hidden: false, addEventListener() {}, removeEventListener() {} } });
   Object.defineProperty(globalThis, 'requestAnimationFrame', { configurable: true, value: (callback: FrameRequestCallback) => { frame = callback; return 1; } });
   Object.defineProperty(globalThis, 'cancelAnimationFrame', { configurable: true, value: () => {} });
-  const session = new CpuSession([0x60, 0x90, 0xf0], view);
+  const session = new CpuSession(bytes, view);
   t.after(() => {
     session.stop();
     for (const [key, descriptor] of original) {
@@ -27,6 +27,38 @@ async function setup(t: TestContext, view: View = 'overview') {
     for (let i = 0; !condition(); i++) { assert.ok(i < 1000, 'playback must reach its target'); tick(); }
   };
   return { session, tick, until };
+}
+
+function stepInstruction(session: CpuSession, target: number) {
+  const from = session.getInstructionAddress(), rawPcs = new Set<number>();
+  let events = 0;
+  do {
+    assert.ok(++events < 100000, 'instruction must settle');
+    session.next();
+    const state = session.getSnapshot();
+    assert.equal(state.error, null);
+    rawPcs.add(state.pc);
+    assert.equal(session.getInstructionAddress(), state.ready ? target : from,
+      'the assembly cursor stays on the current instruction throughout propagation');
+  } while (!session.getSnapshot().ready);
+  return rawPcs;
+}
+
+for (const view of ['overview', 'module', 'nand', 'mos-power'] as const) {
+  test(`${view}: assembly cursor ignores transient PC values during taken and untaken JNC`, async t => {
+    // ADD overflows, so JNC 7 is not taken; ADD 0 then clears carry for JNC 3.
+    const { session } = await setup(t, view, [0x3f, 0x01, 0xe7, 0x00, 0xe3]);
+    for (const target of [1, 2, 3, 4]) stepInstruction(session, target);
+    const rawPcs = stepInstruction(session, 3);
+    if (view !== 'overview') {
+      assert.ok(rawPcs.has(5) && rawPcs.has(7), 'physical PC transitions remain observable');
+    }
+  });
+  test(`${view}: assembly cursor handles JMP and PC wraparound`, async t => {
+    const { session } = await setup(t, view, [0xff, ...Array(15).fill(0)]);
+    stepInstruction(session, 15);
+    stepInstruction(session, 0);
+  });
 }
 
 test('playback defaults to the former 2× rate and manual steps keep their model duration', async t => {
@@ -96,6 +128,7 @@ test('reset and program selection return to a paused start, and a construction s
   await session.changeView('module');
   assert.equal(session.getSnapshot().mode, 'paused');
   assert.equal(session.getSnapshot().cycles, 1);
+  assert.equal(session.getInstructionAddress(), 1);
   session.togglePlayback(); session.speed(4);
   until(() => session.getSnapshot().cycles > 1);
   for (const action of [() => session.reset(), () => session.loadProgram([0xb7, 0xf1])]) {
@@ -107,5 +140,6 @@ test('reset and program selection return to a paused start, and a construction s
     assert.equal(session.getSnapshot().mode, 'paused');
     assert.equal(session.getSnapshot().time, 0);
     assert.equal(session.getSnapshot().cycles, 0);
+    assert.equal(session.getInstructionAddress(), 0);
   }
 });

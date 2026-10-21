@@ -21,7 +21,7 @@ export function ProgramPanel() {
   const customResult = assemble(customSource);
   const custom = params.get('program') === 'custom' && customResult.ok;
   const session = useCpu();
-  const pc = useSyncExternalStore(session.subscribe, session.getPc);
+  const instructionAddress = useSyncExternalStore(session.subscribe, session.getInstructionAddress);
   const [applyRevision, setApplyRevision] = useState(0);
   const lines = custom ? customResult.ok ? customResult.lines : [] : program.lines;
   const bytesKey = lines.map(encode).join(',');
@@ -97,7 +97,7 @@ export function ProgramPanel() {
         <tbody>{lines.map((line, i) => {
           const binary = encode(line).toString(2).padStart(8, '0');
           const [mnemonic, ...args] = formatInstruction(line).split(' ');
-          return <tr key={`${program.id}-${i}`} className={pc === i ? 'current' : undefined} aria-current={pc === i ? 'true' : undefined}><td>{i.toString(16).toUpperCase().padStart(2, '0')}</td>
+          return <tr key={`${program.id}-${i}`} className={instructionAddress === i ? 'current' : undefined} aria-current={instructionAddress === i ? 'true' : undefined}><td>{i.toString(16).toUpperCase().padStart(2, '0')}</td>
             <td><span className="mnemonic">{mnemonic}</span> {args.join(' ')}</td>
             <td>{binary.slice(0, 4)} <span>{binary.slice(4)}</span></td></tr>;
         })}</tbody>

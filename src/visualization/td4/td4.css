@@ -36,7 +36,7 @@
 .td4-svg [data-input]{cursor:pointer}
 .td4-svg [data-input]:focus{outline:none}
 .td4-svg [data-input]:focus-visible .io-bit,.td4-svg [data-input]:hover .io-bit{stroke:var(--ink);stroke-width:2}
-.td4-svg [data-input][aria-disabled="true"]{opacity:.55;cursor:wait}
+.td4-svg [data-input][aria-disabled="true"]{opacity:.55;cursor:not-allowed}
 .td4-svg .detail-circuit .detail-frame{fill:none;stroke:var(--line);stroke-width:.5}
 .td4-svg .detail-circuit .gate-body{fill:var(--paper);stroke:#667066;stroke-width:.7}
 .td4-svg .detail-circuit .detail-port{font-size:4px}
@@ -102,6 +102,8 @@
 .td4-playback-icon { flex: none; vertical-align: middle; }
 .td4-playback .td4-run { min-width: 88px; }
 .td4-playback-hint { max-width: 680px; margin: 4px auto; padding: 0 8px; font-size: 11px; line-height: 1.6; color: var(--secondary); text-align: center; }
+.td4-input-hint { display: grid; }
+.td4-input-hint > span { grid-area: 1 / 1; }
 .td4-signal-controls { margin: 6px auto; max-width: 580px; font-size: 11px; color: var(--secondary); text-align: center; }
 .td4-signal-controls summary { cursor: pointer; padding: 5px; }
 .td4-signal-controls p { padding: 0 8px 6px; line-height: 1.6; }

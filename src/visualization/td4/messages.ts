@@ -8,6 +8,7 @@ const ja = {
   signalControls: '信号を細かく見る', signalStep: '次の信号変化',
   signalHint: '1命令の途中でも、信号は何度も変化します。次の信号が到着する時点まで、または0.1秒だけ進めて、一時停止したまま観察できます。',
   pendingInput: '入力の信号は停止中です。再生かステップ操作で配線を伝わります。',
+  inputLocked: '命令の途中のため、入力を変更できません。「1命令進める」で命令を完了すると変更できます。',
   waiting: 'クロック待ち', running: '連続実行', completed: '命令確定', last: '直前', fit: '全体表示',
   program: 'プログラム', showProgram: 'プログラムを表示', hideProgram: 'プログラムを折りたたむ',
   detail: 'このモジュールの詳細回路', hint: 'INPUTを切り替え、部品や配線を選んで状態を確認できます。',
@@ -19,7 +20,7 @@ const ja = {
   independent: 'CPU本体から独立した実験回路です。入力を変更して伝播と保持を観察できます。',
   back: 'CPU全体へ戻る', inputs: '入力値', outputs: '出力値', stable: '安定', details: '詳細回路',
   io: '外部入出力', inspection: '選択対象', noProgram: 'プログラムを作成して適用してください。',
-  pcNote: '一覧の枠はPCの保持番地。回路内ROMの枠は、配線を経て到着した番地です。',
+  pcNote: '一覧と回路内ROMの枠は実行対象の命令で、1命令の伝播完了後に次の番地へ移ります。配線や端子は伝播途中の信号も表示します。',
 };
 const en: Record<keyof typeof ja, string> = {
   overview: 'Blocks', module: 'Modules', nand: 'NAND', mos: 'MOS', power: 'Power wires', view: 'Circuit view',
@@ -30,6 +31,7 @@ const en: Record<keyof typeof ja, string> = {
   signalControls: 'Inspect signal steps', signalStep: 'Next signal change',
   signalHint: 'Signals change many times within one instruction. Advance to the next signal arrival, or by just 0.1 s, and inspect the circuit while it stays paused.',
   pendingInput: 'Input signals are paused. Use Play or a step control to propagate them along the wires.',
+  inputLocked: 'Input is locked while an instruction is in progress. Choose Step one instruction to finish it and change INPUT.',
   waiting: 'Waiting for clock', running: 'Running', completed: 'instructions completed', last: 'Previous', fit: 'Fit circuit',
   program: 'Program', showProgram: 'Show program', hideProgram: 'Collapse program',
   detail: 'Explore this module', hint: 'Toggle INPUT; select components or wires to inspect their state.',
@@ -41,6 +43,6 @@ const en: Record<keyof typeof ja, string> = {
   independent: 'An experiment independent of the CPU. Change inputs to observe propagation and stored values.',
   back: 'Back to the CPU', inputs: 'Inputs', outputs: 'Outputs', stable: 'Stable', details: 'Module circuit',
   io: 'External input and output', inspection: 'Selection', noProgram: 'Create and apply a program.',
-  pcNote: 'The table highlights the held PC address. The circuit ROM highlights the address that has arrived along the wires.',
+  pcNote: 'The table and circuit ROM highlight the current instruction and move to the next address once propagation for that instruction finishes. Wires and terminals also show signals in transit.',
 };
 export const cpuMessages = (locale: Locale) => locale === 'ja' ? ja : en;

@@ -6,6 +6,27 @@ const {layout}=denseLayoutAPI;
 const {lengthOf}=geometryAPI;
 const near=(a,b)=>Math.abs(a-b)<1e-7;
 const clone=value=>JSON.parse(JSON.stringify(value));
+function reverseRegisterBits(base){
+  // Renumber the identical bit cells in place, including every node, gate,
+  // MOS device and wire reference. Coordinates inside each cell stay fixed.
+  const rename=value=>value.replace(/\bB([0-3])(?=\.)|\bD([0-3])\b/g,
+    (_,b,d)=>b!==undefined?`B${3-Number(b)}`:`D${3-Number(d)}`);
+  const def=JSON.parse(JSON.stringify(base),(_,value)=>typeof value==='string'?rename(value):value);
+  for(const bit of def.bits)bit.bit=3-bit.bit;
+  const originalNodes=Object.fromEntries(base.nodes.map(n=>[n.id,n]));
+  for(const group of def.groups.filter(g=>['D','Q'].includes(g.id))){
+    // Word interfaces remain least-significant bit first. Each logical pin
+    // keeps its CPU coordinate; fitDffContents reroutes the perimeter links.
+    group.ids.reverse();
+    for(const id of group.ids){
+      const node=def.nodes.find(n=>n.id===id),original=originalNodes[id];
+      node.x=original.x;node.y=original.y;
+    }
+  }
+  // clockBranch denotes the physical routing lane, not the logical bit.
+  // Keep it unchanged so the existing clock folds retain their geometry.
+  return def;
+}
 function fitDffContents(def){
   // Use most of each bit's space, reserving only the terminal routing lanes.
   // Uniform scaling preserves the local master/slave clock path ratios.
@@ -195,7 +216,8 @@ function spreadPhaseFolds(def){
   }
 }
 function build(base){
-  const def=clone(base);def.id=`td4-${def.cpuModule}-${def.view}`;def.wireWidth=1.3;
+  const def=['A','B'].includes(base.cpuModule)?reverseRegisterBits(base):clone(base);
+  def.id=`td4-${def.cpuModule}-${def.view}`;def.wireWidth=1.3;
   if(['ALU','MUX','DEC','NEXT'].includes(def.cpuModule))return layout(def,{finalPass:true});
   fitDffContents(def);
   if(def.view==='mos'&&def.bits)enlargeRegisterMos(def);

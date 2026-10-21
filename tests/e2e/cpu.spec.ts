@@ -111,7 +111,7 @@ test('all constructions execute, switch with held state, and blocks annotate exa
   await expect(page.getByLabel('Choose a sample')).toHaveValue('led-blink');
 });
 
-test('input program and continuous execution are connected to CPU and ROM, including fetch delay', async ({ page }) => {
+test('input program and continuous execution keep assembly and ROM cursors synchronized', async ({ page }) => {
   test.setTimeout(60000);
   await home(page, '?view=overview&program=input-output');
   await page.getByLabel('Speed', { exact: true }).selectOption('4');
@@ -131,18 +131,46 @@ test('input program and continuous execution are connected to CPU and ROM, inclu
   await page.getByRole('button', { name: '+0.1 s', exact: true }).click();
   await expect(page.getByTestId('cycle-count')).toHaveText(count!);
   await cycle(page);
-  // Expose the different instants of PC capture and ROM address arrival.
+  // Both cursors ignore partial addresses while stepping through propagation.
   await page.getByRole('button', { name: 'Step one instruction', exact: true }).click();
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
-  let differs = false;
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 20; i++) {
     if (!await page.getByRole('button', { name: 'Next signal change', exact: true }).isEnabled()) break;
     await page.getByRole('button', { name: 'Next signal change', exact: true }).click();
     const pc = await page.locator('.assembly-table tr[aria-current] td').first().textContent();
     const rom = await page.locator('[data-rom-word][aria-current]').getAttribute('data-rom-word');
-    if (parseInt(pc!, 16) !== Number(rom)) { differs = true; break; }
+    expect(Number(rom)).toBe(parseInt(pc!, 16));
+    await expect(page.locator('[data-rom-current]')).toHaveText(new RegExp(`^${pc}: `));
   }
-  expect(differs).toBe(true);
+});
+
+for (const view of ['overview', 'module', 'nand', 'mos-power']) test(`${view}: assembly and ROM highlights move directly from JNC to its destination`, async ({ page }) => {
+  test.setTimeout(60000);
+  await home(page, `?view=${view}&program=kitchen-timer`);
+  await page.getByLabel('Speed', { exact: true }).selectOption('4');
+  for (let i = 0; i < 4; i++) await cycle(page);
+  await expect(page.locator('.assembly-table tr[aria-current] td').first()).toHaveText('04');
+  await expect(page.locator('[data-rom-word][aria-current]')).toHaveAttribute('data-rom-word', '4');
+  type RecordingWindow = Window & { stopCursorRecording?: () => { assembly: number[]; rom: number[]; header: string[] } };
+  await page.evaluate(() => {
+    const addresses = { assembly: [] as number[], rom: [] as number[], header: [] as string[] };
+    const record = () => {
+      const address = parseInt(document.querySelector('.assembly-table tr[aria-current] td')!.textContent!, 16);
+      const rom = Number(document.querySelector('[data-rom-word][aria-current]')!.getAttribute('data-rom-word'));
+      const header = document.querySelector('[data-rom-current]')!.textContent!;
+      if (addresses.assembly.at(-1) !== address) addresses.assembly.push(address);
+      if (addresses.rom.at(-1) !== rom) addresses.rom.push(rom);
+      if (addresses.header.at(-1) !== header) addresses.header.push(header);
+    };
+    record();
+    const observer = new MutationObserver(record);
+    observer.observe(document.querySelector('.assembly-table tbody')!, { attributes: true, attributeFilter: ['aria-current'], subtree: true });
+    observer.observe(document.querySelector('[data-module="ROM"]')!, { attributes: true, attributeFilter: ['aria-current'], childList: true, characterData: true, subtree: true });
+    (window as RecordingWindow).stopCursorRecording = () => { observer.disconnect(); return addresses; };
+  });
+  await cycle(page);
+  const addresses = await page.evaluate(() => (window as RecordingWindow).stopCursorRecording!());
+  expect(addresses).toEqual({ assembly: [4, 3], rom: [4, 3], header: ['04: E3', '03: 01'] });
 });
 
 test('arithmetic samples read input, display their result and reset for another calculation', async ({ page }) => {
