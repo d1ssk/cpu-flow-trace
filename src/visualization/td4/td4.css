@@ -98,7 +98,14 @@
 .td4-control-group + .td4-control-group { border-left: 1px solid var(--line); padding-left: 12px; }
 .td4-run { background: var(--high-soft); color: var(--high); }
 .td4-status { display: flex; justify-content: center; flex-wrap: wrap; gap: 5px 16px; font: 11px var(--mono); min-height: 24px; padding: 5px; color: var(--secondary); }
-.td4-scroll { overflow: auto; overscroll-behavior: contain; max-height: 70vh; padding: 12px; width: 100%; }
+.td4-scroll { overflow: auto; overscroll-behavior: contain auto; max-height: 70vh; padding: 12px; width: 100%; }
+.td4-playback button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.td4-playback-icon { flex: none; vertical-align: middle; }
+.td4-playback .td4-run { min-width: 88px; }
+.td4-playback-hint { max-width: 680px; margin: 4px auto; padding: 0 8px; font-size: 11px; line-height: 1.6; color: var(--secondary); text-align: center; }
+.td4-signal-controls { margin: 6px auto; max-width: 580px; font-size: 11px; color: var(--secondary); text-align: center; }
+.td4-signal-controls summary { cursor: pointer; padding: 5px; }
+.td4-signal-controls p { padding: 0 8px 6px; line-height: 1.6; }
 .td4-svg { display: block; height: auto; max-width: none; margin: 0 auto; }
 .td4-svg .cpu-boundary { pointer-events: none; }
 .td4-svg .cpu-boundary path { fill: none; stroke: var(--secondary); stroke-width: 1.3; stroke-dasharray: 6 5; }
@@ -125,6 +132,12 @@
 @media (max-width: 900px) {
   .td4-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .td4-circuit { grid-row: 1; }
+  .home-page .td4-circuit > .td4-scroll {
+    margin-inline: calc(-1 * var(--home-gutter));
+    width: calc(100% + 2 * var(--home-gutter));
+    padding-left: max(4px, env(safe-area-inset-left, 0px));
+    padding-right: max(4px, env(safe-area-inset-right, 0px));
+  }
   .td4-program { grid-row: 2; max-width: 500px; width: 100%; margin: auto; }
 }
 @media (max-width: 650px) {

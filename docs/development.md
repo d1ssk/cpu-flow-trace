@@ -13,7 +13,7 @@ npm run dev
 
 Open the printed local URL at `/en/` or `/ja/`.
 
-The home page executes TD4 programs through connected circuitry. It starts in MOS mode with power wires, a settled reset state, and the Count up program. Use **1 clock** or **Run continuously** to start execution. Pausing stops observation time, including any signals in flight.
+The home page executes TD4 programs through connected circuitry. It starts in MOS mode with power wires, a settled reset state, and the Count up program. The CPU starts paused. **Play** runs continuously; **Pause** immediately freezes observation time and all signals in flight. **Step one instruction** animates one clock cycle and pauses when propagation finishes; from mid-cycle it finishes only the current instruction. **Inspect signal steps** exposes event and time stepping within an instruction.
 
 Playback defaults to 1×, advancing two milliseconds of model time per wall-clock millisecond (the former 2× rate). The home and module pages share the 0.125×, 0.25×, 0.5×, 1×, 2×, and 4× options. Manual time steps retain their displayed model-time duration.
 

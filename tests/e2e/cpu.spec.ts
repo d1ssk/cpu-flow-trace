@@ -1,10 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
-const ready = (page: Page) => expect(page.getByRole('button', { name: '1 clock', exact: true })).toBeEnabled({ timeout: 25000 });
+const ready = (page: Page) => expect(page.getByRole('button', { name: 'Step one instruction', exact: true })).toBeEnabled({ timeout: 25000 });
 async function home(page: Page, query = '') {
   await page.goto(`/en/${query}`); await ready(page);
 }
 async function cycle(page: Page) {
-  await ready(page); await page.getByRole('button', { name: '1 clock', exact: true }).click(); await ready(page);
+  await ready(page); await page.getByRole('button', { name: 'Step one instruction', exact: true }).click(); await ready(page);
 }
 test.beforeEach(async ({ page }) => {
   const errors: string[] = []; page.on('pageerror', error => errors.push(error.message));
@@ -52,7 +52,8 @@ test('home defaults to MOS with power, loads only that construction, and exposes
 });
 
 test('paused wire transitions, power visibility, zoom and language preserve time and state', async ({ page }) => {
-  await home(page); await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  await home(page);
+  await page.locator('.td4-signal-controls summary').click();
   await page.getByRole('button', { name: 'Toggle input I0', exact: true }).focus(); await page.keyboard.press('Space');
   await expect(page.getByTestId('input-word')).toHaveText('0001');
   await page.getByRole('button', { name: '+0.1 s', exact: true }).click();
@@ -116,20 +117,25 @@ test('input program and continuous execution are connected to CPU and ROM, inclu
   await ready(page); await cycle(page); await cycle(page);
   await expect(page.getByTestId('output-word')).toHaveText('1010');
   await expect(page.locator('.assembly-table tr[aria-current]')).toContainText('02');
-  await page.getByRole('button', { name: 'Run continuously', exact: true }).click();
+  await page.getByRole('button', { name: 'Play', exact: true }).click();
   await expect(page.getByTestId('cycle-count')).not.toHaveText('2 instructions completed');
-  await page.getByRole('button', { name: 'Stop continuous run', exact: true }).click(); await ready(page);
-  const count = await page.getByTestId('cycle-count').textContent();
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
+  const frozenTime = await page.getByLabel('Observation time', { exact: true }).textContent();
+  await page.waitForTimeout(250);
+  await expect(page.getByLabel('Observation time', { exact: true })).toHaveText(frozenTime!);
+  await cycle(page);
+  const count = await page.getByTestId('cycle-count').textContent();
+  await page.locator('.td4-signal-controls summary').click();
   await page.getByRole('button', { name: '+0.1 s', exact: true }).click();
   await expect(page.getByTestId('cycle-count')).toHaveText(count!);
+  await cycle(page);
   // Expose the different instants of PC capture and ROM address arrival.
-  await page.getByRole('button', { name: '1 clock', exact: true }).click();
+  await page.getByRole('button', { name: 'Step one instruction', exact: true }).click();
   await page.getByRole('button', { name: 'Pause', exact: true }).click();
   let differs = false;
   for (let i = 0; i < 100; i++) {
-    if (!await page.getByRole('button', { name: 'Next change', exact: true }).isEnabled()) break;
-    await page.getByRole('button', { name: 'Next change', exact: true }).click();
+    if (!await page.getByRole('button', { name: 'Next signal change', exact: true }).isEnabled()) break;
+    await page.getByRole('button', { name: 'Next signal change', exact: true }).click();
     const pc = await page.locator('.assembly-table tr[aria-current] td').first().textContent();
     const rom = await page.locator('[data-rom-word][aria-current]').getAttribute('data-rom-word');
     if (parseInt(pc!, 16) !== Number(rom)) { differs = true; break; }
@@ -146,11 +152,11 @@ test('arithmetic samples read input, display their result and reset for another 
       await page.getByRole('button', { name: `Toggle input I${bit}`, exact: true }).click();
     }
     await ready(page);
-    await page.getByRole('button', { name: 'Run continuously', exact: true }).click();
+    await page.getByRole('button', { name: 'Play', exact: true }).click();
     // These loops need dozens of instructions, each with visible wire propagation.
     await expect(page.getByTestId('output-word')).toHaveText(output, { timeout: 90000 });
     await expect(page.locator('.assembly-table tr[aria-current] td').first()).toHaveText('07');
-    await page.getByRole('button', { name: 'Stop continuous run', exact: true }).click(); await ready(page);
+    await page.getByRole('button', { name: 'Pause', exact: true }).click(); await ready(page);
     await page.getByRole('button', { name: 'Reset', exact: true }).click(); await ready(page);
     await expect(page.getByTestId('input-word')).toHaveText('0000');
     await expect(page.getByTestId('output-word')).toHaveText('0000');
@@ -179,7 +185,7 @@ test('assembly editing validates, leaves drafts unapplied, executes the compiled
   await page.getByRole('link', { name: '日本語', exact: true }).click();
   await expect(page.getByTestId('output-word')).toHaveText('1000');
   await expect(page.getByLabel('サンプルを選ぶ')).toHaveValue('custom');
-  await page.reload(); await expect(page.getByRole('button', { name: '1 クロック', exact: true })).toBeEnabled();
+  await page.reload(); await expect(page.getByRole('button', { name: '1命令進める', exact: true })).toBeEnabled();
   await expect(page.locator('.assembly-table tbody tr')).toHaveCount(2);
   await page.getByRole('button', { name: '編集する', exact: true }).click();
   await expect(page.getByLabel('アセンブリのソース')).toHaveValue('OUT 8\nJMP 0');
@@ -199,6 +205,25 @@ test('mobile starts with circuit first, program can be expanded and zoom stays w
   expect(program!.y).toBeGreaterThan(y!.y);
   await page.getByRole('button', { name: 'Collapse program', exact: true }).click();
   await page.screenshot({ path: 'test-results/home-mos-mobile.png', fullPage: true });
+});
+
+test('scrolling over the circuit scrolls the page and chains at the edge of a zoomed circuit', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 }); await home(page);
+  const canvas = page.getByTestId('circuit-scroll');
+  await canvas.hover();
+  const before = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 250);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(before);
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await canvas.evaluate(el => { el.scrollTop = 0; });
+  await canvas.hover();
+  await page.mouse.wheel(0, 120);
+  await expect.poll(() => canvas.evaluate(el => el.scrollTop)).toBeGreaterThan(0);
+  await canvas.evaluate(el => { el.scrollTop = el.scrollHeight; });
+  const atEdge = await page.evaluate(() => window.scrollY);
+  await page.mouse.wheel(0, 300);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(atEdge);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 test('nine module experiments support all four views, inspection, inputs and deep links', async ({ page }) => {
@@ -287,11 +312,11 @@ test('construction controls stay in place when the power checkbox appears or dis
       const { x, y, width, height } = button.getBoundingClientRect(); return { x, y, width, height };
     }));
     const initial = await positions();
-    const controls = await page.locator('.td4-controls').boundingBox();
+    const controls = await page.locator('.td4-playback').boundingBox();
     for (const view of ['module', 'nand', 'overview', 'mos']) {
       await page.locator(`[data-view="${view}"]`).click(); await ready(page);
       expect(await positions()).toEqual(initial);
-      expect(await page.locator('.td4-controls').boundingBox()).toEqual(controls);
+      expect(await page.locator('.td4-playback').boundingBox()).toEqual(controls);
       if (view === 'mos') await expect(page.getByLabel('Power wires')).toBeVisible();
       else await expect(page.getByLabel('Power wires')).toBeHidden();
     }

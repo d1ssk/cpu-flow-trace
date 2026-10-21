@@ -100,10 +100,10 @@ export function drawCpu(svg,sim,view,locale){
   if(view==='overview'){
     const boundary=document.createElementNS('http://www.w3.org/2000/svg','g');
     boundary.setAttribute('class','cpu-boundary');
-    boundary.innerHTML='<path d="M0 126H536V46H1120V654H860V744H0Z"/>';
+    boundary.innerHTML='<path d="M0 126H536V46H1120V654H566V744H0Z"/>';
     drawing.prepend(boundary);
     const annotation=document.createElementNS('http://www.w3.org/2000/svg','text');
-    annotation.setAttribute('class','cpu-annotation');annotation.setAttribute('x','550');annotation.setAttribute('y','57');annotation.textContent='CPU';
+    annotation.setAttribute('class','cpu-annotation');annotation.setAttribute('x','44');annotation.setAttribute('y','120');annotation.textContent='CPU';
     drawing.append(annotation);
   }
   if(view==='mos-power'){

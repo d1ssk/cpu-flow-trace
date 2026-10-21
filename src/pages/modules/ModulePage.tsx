@@ -5,6 +5,7 @@ import { NotFoundPage } from '../NotFoundPage';
 import { detailRuntime, parseView, type DetailView, type Part, type View } from '../../circuits/td4/runtime';
 import { ViewControls } from '../../visualization/td4/ViewControls';
 import { TransistorLegend } from '../../visualization/td4/TransistorLegend';
+import { PlaybackIcon } from '../../visualization/td4/PlaybackIcon';
 import { cpuMessages } from '../../visualization/td4/messages';
 import { drawDetail } from '../../visualization/td4/module-view.js';
 import { inspectPart, pick, type Selection } from '../../visualization/td4/inspection';
@@ -93,11 +94,11 @@ function ModuleExperiment({ id }: { id: string }) {
       <Link key={key} to={`/${locale}/modules/${key}/?${params}`} aria-current={id === key ? 'page' : undefined}>{key === 'CF' ? 'C' : key === 'R' ? 'OUT' : key}</Link>)}</nav>
     <div className="td4-module-heading"><h1>{detailRuntime.specs[id].title}</h1><TransistorLegend /></div><p>{m.independent}</p>
     <ViewControls detail view={view} onChange={changeView} disabled={loading} />
-    <div className="td4-controls">
-      <button onClick={() => setPlaying(!playing)} disabled={loading || !!error}>{playing ? t.pause : t.play}</button>
-      <button onClick={() => { setPlaying(false); act(s => s.next()); }} disabled={loading || !!error || !part?.busy}>{t.next}</button>
+    <div className="td4-controls td4-playback">
+      <button onClick={() => setPlaying(!playing)} disabled={loading || !!error}><PlaybackIcon kind={playing ? 'pause' : 'play'} />{playing ? t.pause : t.play}</button>
+      <button onClick={() => { setPlaying(false); act(s => s.next()); }} disabled={loading || !!error || !part?.busy}>{m.signalStep}</button>
       <button onClick={() => { setPlaying(false); act(s => s.advance(10)); }} disabled={loading || !!error}>+0.01 s</button>
-      <button onClick={() => { act(s => s.reset()); setPlaying(true); setSelected(null); }} disabled={loading || !!error}>{t.reset}</button>
+      <button onClick={() => { act(s => s.reset()); setPlaying(true); setSelected(null); }} disabled={loading || !!error}><PlaybackIcon kind="reset" />{t.reset}</button>
       <label>{t.speed} <select aria-label={t.speed} value={speed} onChange={e => setSpeed(Number(e.target.value))}>{playbackSpeeds.map(v => <option key={v} value={v}>{v}×</option>)}</select></label>
       <output aria-label={t.time}>{((part?.time ?? 0) / 1000).toFixed(3)} s</output>
     </div>

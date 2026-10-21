@@ -19,7 +19,7 @@ export function SiteLayout() {
     <a href="#main" className="skip-link">{t.skip}</a>
     <header className="site-header">
       <div className="site-identity">
-        <Link className="brand" to={`/${locale}/`}>How a CPU Works</Link>
+        <Link className="brand" to={`/${locale}/`}>How a <span className="brand-cpu">CPU</span> Works</Link>
         <p className="site-tagline">{t.tagline}</p>
       </div>
       <nav className="main-nav" aria-label={locale === 'ja' ? 'メインナビゲーション' : 'Main navigation'}>

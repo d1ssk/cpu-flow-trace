@@ -16,8 +16,13 @@ export function CpuCanvas() {
   useEffect(() => {
     const scroll = scrollRef.current!;
     function resize() {
+      const style = getComputedStyle(scroll);
+      const availableWidth = scroll.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
       const height = Math.max(280, Math.min(740, innerHeight - scroll.getBoundingClientRect().top - 150));
-      setWidth(Math.max(220, Math.min(scroll.clientWidth - 24, height * 1184 / 750)));
+      // On mobile, use the available width; taller circuits remain locally scrollable.
+      const fitWidth = window.matchMedia('(max-width: 900px)').matches
+        ? availableWidth : Math.min(availableWidth, height * 1184 / 750);
+      setWidth(Math.max(220, fitWidth));
     }
     const observer = new ResizeObserver(resize); observer.observe(scroll); window.addEventListener('resize', resize); resize();
     return () => { observer.disconnect(); window.removeEventListener('resize', resize); };

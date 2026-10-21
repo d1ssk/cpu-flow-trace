@@ -1,7 +1,13 @@
 import type { Locale } from '../../i18n';
 const ja = {
   overview: '全体ブロック', module: 'モジュール', nand: 'NAND', mos: 'MOS', power: '電源線', view: '回路の表示',
-  loading: '回路を読み込んでいます…', retry: '再試行', run: '連続実行', stop: '連続停止',
+  loading: '回路を読み込んでいます…', retry: '再試行',
+  instructionStep: '1命令進める', instructionPlaying: '1命令を実行中',
+  playbackHint: '再生は連続実行。一時停止は信号もその場で止めます。1命令進めると、1クロック分を再生して自動で一時停止します。',
+  instructionHint: '1クロック分を再生して一時停止します。命令の途中なら、その命令の完了まで進めます。',
+  signalControls: '信号を細かく見る', signalStep: '次の信号変化',
+  signalHint: '1命令の途中でも、信号は何度も変化します。次の信号が到着する時点まで、または0.1秒だけ進めて、一時停止したまま観察できます。',
+  pendingInput: '入力の信号は停止中です。再生かステップ操作で配線を伝わります。',
   waiting: 'クロック待ち', running: '連続実行', completed: '命令確定', last: '直前', fit: '全体表示',
   program: 'プログラム', showProgram: 'プログラムを表示', hideProgram: 'プログラムを折りたたむ',
   detail: 'このモジュールの詳細回路', hint: 'INPUTを切り替え、部品や配線を選んで状態を確認できます。',
@@ -17,7 +23,13 @@ const ja = {
 };
 const en: Record<keyof typeof ja, string> = {
   overview: 'Blocks', module: 'Modules', nand: 'NAND', mos: 'MOS', power: 'Power wires', view: 'Circuit view',
-  loading: 'Loading circuit…', retry: 'Retry', run: 'Run continuously', stop: 'Stop continuous run',
+  loading: 'Loading circuit…', retry: 'Retry',
+  instructionStep: 'Step one instruction', instructionPlaying: 'Executing one instruction',
+  playbackHint: 'Play runs continuously. Pause freezes signals immediately. Step one instruction plays one clock cycle, then pauses automatically.',
+  instructionHint: 'Play one clock cycle, then pause. If an instruction is in progress, finish that instruction.',
+  signalControls: 'Inspect signal steps', signalStep: 'Next signal change',
+  signalHint: 'Signals change many times within one instruction. Advance to the next signal arrival, or by just 0.1 s, and inspect the circuit while it stays paused.',
+  pendingInput: 'Input signals are paused. Use Play or a step control to propagate them along the wires.',
   waiting: 'Waiting for clock', running: 'Running', completed: 'instructions completed', last: 'Previous', fit: 'Fit circuit',
   program: 'Program', showProgram: 'Show program', hideProgram: 'Collapse program',
   detail: 'Explore this module', hint: 'Toggle INPUT; select components or wires to inspect their state.',
