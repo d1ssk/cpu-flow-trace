@@ -73,11 +73,22 @@ For hosting under a subdirectory, set the base path at build time:
 
 ```sh
 SITE_BASE=/cpu-flow-trace/ npm run build
+SITE_BASE=/cpu-flow-trace/ npm run preview
 ```
 
 Article routes are generated automatically from `src/articles/index.ts`. Add other page routes to `scripts/static-routes.mjs` when needed.
 
-The build produces a local artifact; this workflow does not deploy the site.
+The build command produces a local artifact. The GitHub Actions workflow in
+`.github/workflows/pages.yml` checks generated circuits, runs the tests, builds
+the site, and publishes `dist/` to GitHub Pages on every push to `main`. It can
+also be started manually from Actions → Deploy to GitHub Pages → Run workflow
+(choose `main` to publish).
+
+For initial setup, select **Settings → Pages → Build and deployment → Source →
+GitHub Actions** in the repository. The workflow reads the base path from the
+Pages configuration, so assets and links work under `/cpu-flow-trace/` as well
+as a custom domain. No personal access token or additional repository secrets
+are required. The deployment URL appears in the `github-pages` environment.
 
 ## Circuit data
 
