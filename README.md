@@ -55,3 +55,13 @@ The blinking LED and ramen timer programs are based on the examples collected on
 See the [development guide](docs/development.md) for setup and build instructions, or the [contribution guide](docs/contributing.md) for adding circuits and articles.
 
 Created by [Daichi Sasaki](https://d1ssk.github.io/).
+
+## FT16: beyond TD4
+
+The third navigation entry, **FT16**, opens a learning path at `/ja/ft16/`:
+
+- Stage 0 introduces the new circuit view using TD4. Stages 1–9 (including 6a/6b) progress through registers, memory, calls, I/O, multicycle execution, pipelines, caches, protection, and their integration.
+- Each stage places the live circuit above an explanation, module links, and minimal experiments with explicit initial CPU states. The original complete sample programs and assembly editor remain available.
+- `/ja/ft16/isa/` explains the shared instruction set, encodings, flags, memory, calling convention, traps, and TLBs, with an interactive encoding example.
+
+FT16 is available in English and Japanese, including lessons, the ISA guide, experiments, simulator controls, and live module/wire explanations. Language links preserve the stage and selected program. Diagram labels are English. The runtime lives in `src/ft16/`; production does not depend on the historical `workbench/ft8/` directory.

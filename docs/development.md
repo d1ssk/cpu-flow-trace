@@ -112,3 +112,17 @@ The original workbench keeps its own commands (`generate:td4-details`, `watch:td
 ## Sample program sources
 
 The standard TD4 blinking LED program comes from [this TD4 implementation page](https://xyama.sakura.ne.jp/hp/4bitCPU_TD4.html). The kitchen timer uses the supplied ten-instruction assembly: it reads INPUT once, counts B up to overflow in 10-instruction stages, then blinks all output LEDs. The C-like representations are explanatory pseudocode, not executable inputs to the simulator.
+
+## FT16 learning path
+
+The third site section lives at `/:locale/ft16/`, with `isa/` and stage routes `0/` through `9/` (`6a/` and `6b/` for the two pipelines). All routes get static entry files at build time. FT16 loads lazily, independently of the TD4 home simulator.
+
+- `src/ft16/`: migrated circuit builders, precomputed routes, event simulation, assemblers, samples, SVG renderer, and reference-model tests. The reference emulator is test-only.
+- `src/ft16/experiments.js`: executable minimal lessons with explicit initial module state, source code, observation steps, and expected results. Fixtures apply before initial wire evaluation; reset clones them afresh. Editing a lesson as a custom program uses standard reset instead.
+- `src/pages/ft16/lessons.ts`: stage explanations, module links, and sample guidance.
+- `src/ft16/docs/isa.md`: canonical displayed ISA reference. The page renders its tables and code as safe React text and uses the real assembler for the encoding explorer.
+- `src/pages/ft16/Workspace.tsx`: lifecycle boundary for the imperative renderer. Unmounting cancels playback and comparison work and removes listeners. Circuit CSS is scoped to `.ft-workspace`.
+
+Run `npm run test:ft16` for FT16 reference comparisons, minimal experiment results (including hazard settings), fixture resets, and article-to-module links. Run `npx playwright test tests/e2e/ft16.spec.ts` after `npm run build` for navigation, direct routes, playback, editing, propagation, ISA decoding, and mobile layout. These checks are also included in the normal test suites.
+
+Content and controls support both locales. `src/ft16/i18n/en.json` translates authored messages; `docs/isa.en.md` contains the English ISA specification. Inspector explanations receive a view-local translator, with Japanese as the default for headless use. Assembly source and CPU fixtures are never translated. Language links preserve the stage, query parameters, and fragment. `workbench/ft8/` remains an independent historical prototype, not a production import.

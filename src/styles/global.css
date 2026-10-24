@@ -36,8 +36,8 @@ h1, h2, h3, p { margin: 0; }
 .brand:hover { color: var(--ink); }
 .brand-cpu { color: var(--high); }
 .site-tagline { margin-top: 7px; font-size: 13px; color: var(--secondary); }
-.main-nav { display: flex; gap: 20px; }
-.main-nav a { font-size: 12px; color: var(--secondary); padding: 8px 0; border-bottom: 1px solid transparent; }
+.main-nav { display: flex; align-items: baseline; gap: 20px; }
+.main-nav a { font-size: 12px; line-height: 1.5; color: var(--secondary); padding: 8px 0; border-bottom: 1px solid transparent; }
 .main-nav a.active { color: var(--ink); border-color: var(--ink); }
 .header-end { display: flex; align-items: center; gap: 28px; margin-left: auto; }
 .signal-legend { display: flex; gap: 16px; font: 11px var(--mono); }

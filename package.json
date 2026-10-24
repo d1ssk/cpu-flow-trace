@@ -16,6 +16,8 @@
     "check:td4-details": "node scripts/td4-details.mjs --check",
     "pretest:workbench": "npm run generate:td4-details",
     "test:td4-wide": "TD4_DETAIL_EDITION=wide node --test workbench/td4_v2/details.test.cjs",
+    "test:ft16": "node --import tsx --test src/ft16/tests/*.test.js src/ft16/*.test.js src/pages/ft16/*.test.ts",
+    "test:ft8": "node --test workbench/ft8/tests/*.test.js",
     "generate:cpu": "node scripts/generate-cpu-circuits.mjs",
     "check:cpu": "node scripts/generate-cpu-circuits.mjs --check"
   },

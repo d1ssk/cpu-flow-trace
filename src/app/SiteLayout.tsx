@@ -11,7 +11,7 @@ export function SiteLayout() {
   const alternatePath = location.pathname.replace(/^\/(ja|en)(?=\/|$)/, `/${alternateLocale}`);
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = `How a CPU Works — ${t.tagline}`;
+    document.title = 'How a CPU works';
     document.querySelector('meta[name="description"]')?.setAttribute('content', `${t.tagline} ${t.introduction}`);
   }, [locale, t]);
   useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
@@ -25,6 +25,7 @@ export function SiteLayout() {
       <nav className="main-nav" aria-label={locale === 'ja' ? 'メインナビゲーション' : 'Main navigation'}>
         <NavLink to={`/${locale}/`} end>{t.simulator}</NavLink>
         <NavLink to={`/${locale}/learn/`}>{t.learn}</NavLink>
+        <NavLink to={`/${locale}/ft16/`}>FT16</NavLink>
       </nav>
       <div className="header-end">
         <div className="signal-legend"><span><i />L</span><span><i className="high-dot" />H</span></div>
