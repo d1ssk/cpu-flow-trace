@@ -7,6 +7,7 @@ import { CpuCanvas } from './Canvas';
 import { cpuMessages } from './messages';
 import { binary } from '../../td4/format';
 import { TransistorLegend } from './TransistorLegend';
+import { TransistorPlayground } from './TransistorPlayground';
 import './td4.css';
 export function CpuWorkspace() { return <CpuProvider><Workspace /></CpuProvider>; }
 function Workspace() {
@@ -18,7 +19,9 @@ function Workspace() {
       <button aria-expanded={open} aria-controls="home-program" onClick={() => setOpen(!open)}>{open ? m.hideProgram : m.showProgram}</button></div>
     <div className={`td4-grid ${open ? '' : 'program-collapsed'}`}>
       <div id="home-program" className="td4-program" hidden={!open}><ProgramPanel /></div>
-      <div className="td4-circuit"><CpuControls /><CpuCanvas /><StateReadout /></div>
+      <div className="td4-circuit"><CpuControls />
+        <CpuCanvas aside={<TransistorPlayground />}><StateReadout /></CpuCanvas>
+      </div>
     </div>
     <div className="td4-notes"><p>{m.rule}</p><p>{m.switchNote}</p><p>{m.model}</p></div>
   </section>;

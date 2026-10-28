@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useLocale } from '../../i18n';
 import { detailRuntime } from '../../circuits/td4/runtime';
@@ -7,7 +7,7 @@ import { drawCpu } from './cpu-view.js';
 import { pick, inspectCpu, type Selection } from './inspection';
 import { cpuMessages } from './messages';
 
-export function CpuCanvas() {
+export function CpuCanvas({ children, aside }: { children?: ReactNode; aside?: ReactNode }) {
   const session = useCpu(); const { locale, t } = useLocale(); const m = cpuMessages(locale);
   const svgRef = useRef<SVGSVGElement>(null), scrollRef = useRef<HTMLDivElement>(null);
   const renderer = useRef<ReturnType<typeof drawCpu> | null>(null);
@@ -71,7 +71,10 @@ export function CpuCanvas() {
         <output aria-label={locale === 'ja' ? '表示倍率' : 'Zoom'}>{Math.round(zoom * 100)}%</output>
       </div>
     </div>
-    <CpuInspector selected={selected} />
+    <div className="td4-canvas-readout">
+      <div><CpuInspector selected={selected} />{children}</div>
+      {aside}
+    </div>
   </>;
 }
 function CpuInspector({ selected }: { selected: Selection | null }) {

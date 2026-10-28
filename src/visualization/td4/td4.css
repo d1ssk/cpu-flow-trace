@@ -119,6 +119,24 @@
 .td4-inspector a { color: var(--high); text-decoration: underline; }
 .td4-registers { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: center; font: 11px var(--mono); padding: 8px 12px; }
 .td4-registers output { color: var(--high); }
+.td4-canvas-readout { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 4px 12px; border-top: 1px solid var(--line); }
+.td4-canvas-readout > div { flex: 1 1 260px; min-width: 0; }
+.td4-canvas-readout .td4-inspector { border-top: 0; }
+.transistor-playground { display: grid; grid-template-columns: minmax(0, 220px) 66px; align-items: center; gap: 4px; flex: 0 1 298px; min-width: 0; margin-left: auto; padding: 2px 4px; font: 10px var(--mono); }
+.transistor-types { display: flex; }
+.transistor-types [aria-pressed=true] { background: var(--high-soft); color: var(--high); }
+.transistor-diagram { display: block; width: 100%; height: auto; overflow: visible; }
+.transistor-diagram text { font: 10px var(--mono); fill: var(--ink); pointer-events: none; }
+.transistor-selector { cursor: pointer; }
+.transistor-selector path, .transistor-gate, .transistor-channel { fill: none; stroke-width: 1.5; stroke-linecap: round; }
+.transistor-diagram .wire-line { stroke-width: 1.5; }
+.transistor-selector .selector-hit { fill: transparent; stroke: var(--line); }
+.transistor-selector:hover .selector-hit, .transistor-selector:focus-visible .selector-hit { fill: var(--high-soft); stroke: var(--high); }
+.transistor-bubble { fill: var(--paper); stroke-width: 1.5; }
+.transistor-playback { display: grid; justify-items: center; gap: 4px; }
+.transistor-playback button { padding: 5px 3px; }
+.transistor-playback select { font: inherit; padding: 3px; }
+.transistor-transport { display: flex; align-items: center; }
 .td4-notes { padding: 16px 0; color: var(--secondary); font-size: 11px; line-height: 1.6; border-bottom: 1px solid var(--line); }
 .td4-notes p + p { margin-top: 4px; }
 .assembly-table tr.current { background: var(--high-soft); outline: 1px solid var(--high); outline-offset: -1px; }
