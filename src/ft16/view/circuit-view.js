@@ -1,31 +1,19 @@
 /* Live SVG view of a running circuit: wire colours, travelling wavefronts,
  * terminal values and module contents. Zoom and pan act on the viewBox. */
 
-import { renderStatic, renderView, esc, STYLE } from './svg.js';
+import { renderStatic, renderView, esc, pathOf, STYLE } from './svg.js';
 import { formatValue } from '../sim/format.js';
 import { charWidth } from '../sim/metrics.js';
+import { bitLane, bitValue, bitStroke, lanePoint, laneProgress } from './bit-wires.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
-function pointAt(points, distance) {
-  let left = distance;
-  for (let i = 1; i < points.length; i++) {
-    const [x0, y0] = points[i - 1], [x1, y1] = points[i];
-    const len = Math.abs(x1 - x0) + Math.abs(y1 - y0);
-    if (left <= len) {
-      const t = len ? left / len : 0;
-      return [x0 + (x1 - x0) * t, y0 + (y1 - y0) * t];
-    }
-    left -= len;
-  }
-  return points[points.length - 1];
-}
-
 export class CircuitView {
-  constructor(svg, { onSelect } = {}) {
+  constructor(svg, { onSelect, onBeforeExternal } = {}) {
     this.svg = svg;
     this.abort = new AbortController();
     this.onSelect = onSelect;
+    this.onBeforeExternal = onBeforeExternal;
     this.showFrontValues = true;
     this.view = null;
     this.installZoom();
@@ -38,9 +26,20 @@ export class CircuitView {
     this.wireEls = new Map();
     for (const el of this.svg.querySelectorAll('[data-wire]')) {
       const wire = sim.wires.get(el.dataset.wire);
-      this.wireEls.set(wire.id, { el, waves: el.querySelector('.waves'), d: el.querySelector('.wire-base').getAttribute('d'), wire, key: '' });
+      const lanes = [...el.querySelectorAll('[data-wire-bit]')].map(base => {
+        const lane = bitLane(wire, Number(base.dataset.wireBit));
+        return { ...lane, base, d: pathOf(lane.points) };
+      });
+      this.wireEls.set(wire.id, { el, waves: el.querySelector('.waves'), lanes, wire, key: '', fronts: [], labels: [] });
     }
     this.frontLayer = this.svg.querySelector('.fronts');
+    this.pinEls = [...this.svg.querySelectorAll('[data-pin]')].map(el => {
+      const [id, name] = el.dataset.pin.split('.'), mod = sim.modules.get(id);
+      return { el, mod, port: mod.spec.ports.find(p => p.name === name), bit: Number(el.dataset.bit) };
+    });
+    this.junctionEls = [...this.svg.querySelectorAll('[data-junction-wire]')].map(el => ({
+      el, wire: sim.wires.get(el.dataset.junctionWire), bit: Number(el.dataset.bit), fraction: Number(el.dataset.fraction),
+    }));
     this.viewEls = new Map([...this.svg.querySelectorAll('[data-view]')].map(el => [el.dataset.view, el]));
     this.portEls = [...this.svg.querySelectorAll('[data-port-value]')].map(el => {
       const [m, p] = el.dataset.portValue.split('.');
@@ -63,6 +62,7 @@ export class CircuitView {
     if (sw) {
       const id = sw.dataset.switch, bit = Number(sw.dataset.bit);
       const current = this.sim.state(id).sw;
+      this.onBeforeExternal?.();
       this.sim.setExternal(id, 'sw', current ^ (1 << bit));
       this.render(true);
       this.onSelect?.({ kind: 'module', id }, { external: true });
@@ -97,7 +97,6 @@ export class CircuitView {
   /* Updates colours, wavefronts and labels. `full` also redraws module contents. */
   render(full = false) {
     const sim = this.sim;
-    const cycle = sim.cycle;
     let fronts = '';
     const placed = [];
     const free = r => !placed.some(q => overlaps(q, r)) && !this.obstacles.some(q => overlaps(q, r));
@@ -113,30 +112,57 @@ export class CircuitView {
     };
     for (const w of this.wireEls.values()) {
       const wire = w.wire;
-      const bus = wire.width > 1;
       const inflight = wire.transitions.length > 0;
-      const recent = wire.lastCycle === cycle && cycle > 0;
-      const key = inflight ? `t${sim.time}` : `${wire.initial}|${recent}`;
-      if (key === w.key) continue;
-      w.key = key;
-      if (bus) w.el.classList.toggle('changed', recent);
-      else w.el.classList.toggle('high', !!wire.initial);
-      if (!inflight) { if (w.hadWaves) { w.waves.innerHTML = ''; w.hadWaves = false; } continue; }
-      // One layer per transition still travelling; newer layers lie on top.
-      let layers = '';
-      for (const t of wire.transitions) {
-        const distance = Math.min(wire.length, Math.max(0, (sim.time - t.time) / wire.delay * wire.length));
-        if (distance <= 0) continue;
-        const cls = bus ? 'bus' : t.value ? 'high' : 'low';
-        layers += `<path class="wave ${cls}" d="${w.d}" stroke-dasharray="${distance} ${wire.length + 10}"/>`;
-        const [x, y] = pointAt(wire.points, distance);
-        fronts += `<circle class="front ${cls}" cx="${x}" cy="${y}" r="${bus ? 4 : 3}"/>`;
-        if (bus && this.showFrontValues) fronts += label(x, y, formatValue(t.value, wire.width));
+      const key = inflight ? `${sim.time}|${sim.emissionSeq}` : `stable:${wire.initial}`;
+      if (key !== w.key) {
+        w.key = key;
+        w.fronts = []; w.labels = [];
+        let layers = '';
+        for (const lane of w.lanes) {
+          let previous = bitValue(wire.initial, lane.bit);
+          lane.base.setAttribute('class', `wire-base ${previous ? 'high' : 'low'}`);
+          // Unchanged bits do not acquire a wavefront just because another
+          // bit in the word changed. Keep older pulses until they arrive.
+          for (const t of wire.transitions) {
+            const value = bitValue(t.value, lane.bit);
+            if (value === previous) continue;
+            previous = value;
+            const fraction = laneProgress(lane, (sim.time - t.time) / wire.delay);
+            const cls = value ? 'high' : 'low';
+            if (fraction > 0) layers += `<path class="wave ${cls}" data-bit="${lane.bit}" d="${lane.d}" pathLength="1" stroke-dasharray="${fraction} 1"/>`;
+            const [x, y] = lanePoint(lane, fraction);
+            w.fronts.push(`<circle class="front ${cls}" data-front-wire="${esc(wire.id)}" data-bit="${lane.bit}" cx="${x}" cy="${y}" r="${bitStroke(wire.width) * 0.85}"/>`);
+          }
+        }
+        if (wire.width > 1) for (const t of wire.transitions) {
+          const fraction = laneProgress(w.lanes[0], (sim.time - t.time) / wire.delay);
+          // At departure this would duplicate the output terminal value,
+          // often several times at a fan-out. Label only moving fronts.
+          if (fraction <= 0) continue;
+          w.labels.push({ point: lanePoint(w.lanes[0], fraction), text: formatValue(t.value, wire.width) });
+        }
+        w.waves.innerHTML = layers;
       }
-      w.waves.innerHTML = layers;
-      w.hadWaves = true;
+      // Reuse geometry when paused, but rebuild labels so the checkbox and
+      // overlapping-label avoidance also work without advancing time.
+      fronts += w.fronts.join('');
+      if (this.showFrontValues) for (const item of w.labels) fronts += label(...item.point, item.text);
     }
     this.frontLayer.innerHTML = fronts;
+    for (const p of this.pinEls) {
+      const word = p.port.dir === 'in' ? p.mod.in[p.port.name] : p.mod.out[p.port.name];
+      const high = bitValue(word ?? 0, p.bit);
+      if (high === p.value) continue;
+      p.value = high;
+      p.el.setAttribute('class', `pin ${high ? 'high' : 'low'}`);
+      p.el.querySelector('title').textContent = `${p.mod.id}.${p.port.name}[${p.bit}] ${high ? 'H' : 'L'}`;
+    }
+    for (const j of this.junctionEls) {
+      const high = bitValue(sim.valueAt(j.wire, j.fraction), j.bit);
+      if (high === j.value) continue;
+      j.value = high;
+      j.el.setAttribute('class', `junction ${high ? 'high' : 'low'}`);
+    }
     for (const p of this.portEls) {
       const value = p.port.dir === 'in' ? p.mod.in[p.port.name] : p.mod.out[p.port.name];
       const text = formatValue(value ?? 0, p.port.width);

@@ -49,11 +49,12 @@ class EventQueue {
 }
 
 export class Simulator {
-  constructor(circuit, { program, options = {}, initialState = {} } = {}) {
+  constructor(circuit, { program, options = {}, initialState = {}, settleOnReset = true } = {}) {
     this.circuit = circuit;
     this.program = program;
     this.options = options;
     this.initialState = structuredClone(initialState);
+    this.settleOnReset = settleOnReset;
     this.listeners = new Set();
     this.reset();
   }
@@ -103,12 +104,50 @@ export class Simulator {
       this.wires.set(w.id, wire);
       this.wiresByNet.get(w.net).push(wire);
     }
-    // Initial evaluation as ordinary wire events, then settle and restart time.
+    // Resolve startup through ordinary wire events, without a clock edge.
+    // By default start settled; callers inspecting startup propagation can
+    // leave these events pending instead.
     this.cause = { type: 'reset' };
     for (const m of this.modules.values()) this.evaluate(m, { type: 'reset' });
-    this.settle();
-    for (const wire of this.wires.values()) { wire.transitions = []; wire.initial = wire.arrived; }
-    this.time = 0;
+    if (this.settleOnReset) {
+      this.settle();
+      for (const wire of this.wires.values()) { wire.transitions = []; wire.initial = wire.arrived; }
+      this.time = 0;
+    }
+    this.notify();
+  }
+
+  /* Runtime checkpoints belong to this simulator and its fixed circuit. */
+  snapshot() {
+    // Clone the complete event graph together: arrivals and causal traces
+    // share transition objects. Keep executable definitions/topology outside.
+    return structuredClone({
+      runtime: Object.fromEntries([
+        'time', 'order', 'cycle', 'retired', 'trapCount', 'trapCauses',
+        'cycleDepth', 'meta', 'cycleLog', 'clockTime', 'emissionSeq', 'cause',
+      ].map(key => [key, this[key]])),
+      modules: [...this.modules.values()].map(m => ({
+        id: m.id, in: m.in, out: m.out, state: m.state,
+        triggers: m.triggers, lastEmission: m.lastEmission,
+      })),
+      wires: [...this.wires.values()].map(w => ({
+        id: w.id, source: w.source, arrived: w.arrived, initial: w.initial,
+        transitions: w.transitions, last: w.last, lastCycle: w.lastCycle,
+      })),
+      queue: this.queue.items.map(({ time, order, wire, transition }) => ({ time, order, wireId: wire.id, transition })),
+      dirty: [...this.dirty].map(m => m.id),
+    });
+  }
+
+  restore(snapshot) {
+    // Restore into the same circuit without evaluating it or sending a clock.
+    // Clone again so future execution cannot mutate a saved checkpoint.
+    const saved = structuredClone(snapshot);
+    Object.assign(this, saved.runtime);
+    for (const m of saved.modules) Object.assign(this.modules.get(m.id), m);
+    for (const w of saved.wires) Object.assign(this.wires.get(w.id), w);
+    this.queue.items = saved.queue.map(({ wireId, ...event }) => ({ ...event, wire: this.wires.get(wireId) }));
+    this.dirty = new Set(saved.dirty.map(id => this.modules.get(id)));
     this.notify();
   }
 

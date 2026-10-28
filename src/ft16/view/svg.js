@@ -5,6 +5,7 @@
 
 import { formatValue } from '../sim/format.js';
 import { FONT, FONT_FAMILY, LINE, charWidth, rowKind, showsValue } from '../sim/metrics.js';
+import { bitLane, bitPin, bitStroke, laneJunction } from './bit-wires.js';
 
 export const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 export const pathOf = points => points.map(([x, y], i) => `${i ? 'L' : 'M'}${x} ${y}`).join('');
@@ -13,9 +14,23 @@ export function renderStatic(circuit) {
   const wires = circuit.wires.map(w => {
     const d = pathOf(w.points);
     const cls = w.width > 1 ? 'bus' : 'bit';
-    return `<g class="wire ${cls}" data-wire="${esc(w.id)}" tabindex="0" role="button" aria-label="${esc(w.from)} → ${esc(w.to)}"><path class="wire-halo" d="${d}"/><path class="wire-base" d="${d}"/><g class="waves"></g><path class="wire-hit" d="${d}"/></g>`;
+    const bits = Array.from({ length: w.width }, (_, bit) => {
+      const lane = bitLane(w, bit);
+      return `<path class="wire-base low" data-wire-bit="${bit}" d="${pathOf(lane.points)}" pathLength="1"><title>${esc(w.from)}[${bit}] → ${esc(w.to)}[${bit}]</title></path>`;
+    }).join('');
+    return `<g class="wire ${cls}" data-wire="${esc(w.id)}" data-width="${w.width}" style="--bit-stroke:${bitStroke(w.width)}" tabindex="0" role="button" aria-label="${esc(w.from)} → ${esc(w.to)}"><path class="wire-halo" d="${d}"/><path class="wire-hit" d="${d}"/>${bits}<g class="waves"></g></g>`;
   }).join('');
-  const dots = circuit.nets.flatMap(n => n.junctions.map(([x, y]) => `<circle class="junction ${n.width > 1 ? 'bus' : 'bit'}" data-net="${esc(n.id)}" cx="${x}" cy="${y}" r="${n.width > 1 ? 3 : 2.2}"/>`)).join('');
+  const seen = new Set();
+  const dots = circuit.nets.flatMap(n => n.junctions.flatMap(point => circuit.wires.filter(w => w.net === n.id).flatMap(w =>
+    Array.from({ length: w.width }, (_, bit) => {
+      const junction = laneJunction(w, bitLane(w, bit), point);
+      if (!junction) return '';
+      const [x, y] = junction.point, key = `${n.id}:${bit}:${x}:${y}`;
+      if (seen.has(key)) return '';
+      seen.add(key);
+      return `<circle class="junction low" data-junction-wire="${esc(w.id)}" data-fraction="${junction.fraction}" data-bit="${bit}" cx="${x}" cy="${y}" r="${bitStroke(w.width) * 0.8}"/>`;
+    })
+  ))).join('');
   const modules = circuit.modules.map(renderModule).join('');
   return `<g class="wires">${wires}</g><g class="junctions">${dots}</g><g class="modules">${modules}</g><g class="fronts"></g>`;
 }
@@ -28,7 +43,10 @@ function renderModule(m) {
   for (const p of m.ports) {
     const value = showsValue(p) ? ` <tspan class="port-value" data-port-value="${esc(m.id)}.${esc(p.name)}"></tspan>` : '';
     const name = esc(p.name.replace(/^i_/, ''));
-    out += `<circle class="pin ${p.width > 1 ? 'bus' : 'bit'}" data-pin="${esc(m.id)}.${esc(p.name)}" cx="${p.x}" cy="${p.y}" r="${p.width > 1 ? 2.6 : 2}"><title>${name}</title></circle>`;
+    for (let bit = 0; bit < p.width; bit++) {
+      const [px, py] = bitPin(p, bit);
+      out += `<circle class="pin low" data-pin="${esc(m.id)}.${esc(p.name)}" data-bit="${bit}" cx="${px}" cy="${py}" r="${bitStroke(p.width) * 0.65}"><title>${name}[${bit}]</title></circle>`;
+    }
     if (p.noLabel) continue;
     if (p.side === 'left') out += `<text class="port-label" x="${p.x + 5}" y="${p.y + 3}">${name}${value}</text>`;
     else if (p.side === 'right') out += `<text class="port-label" x="${p.x - 5}" y="${p.y + 3}" text-anchor="end">${value ? `${value.slice(1)} ` : ''}${name}</text>`;
@@ -127,20 +145,26 @@ export function portValueText(value, width) {
 }
 
 const MONO = FONT_FAMILY;
+export const WIRE_STYLE = `
+.ft-workspace .wire path {fill:none;stroke-linejoin:round;stroke-linecap:round}
+.ft-workspace .wire-halo {stroke:var(--bg,#f6f4ef);stroke-width:10;pointer-events:none}
+.ft-workspace .wire.bit .wire-halo {stroke-width:5}
+.ft-workspace .wire-base, .ft-workspace .wire .wave {stroke-width:var(--bit-stroke);stroke-linecap:butt}
+.ft-workspace .wire .high {stroke:var(--high,#b76557)}
+.ft-workspace .wire .low {stroke:var(--low,#8d9596)}
+.ft-workspace .wire-hit {stroke:transparent;stroke-width:10;cursor:pointer}
+.ft-workspace .wire.selected .wire-halo, .ft-workspace .wire:focus-visible .wire-halo {stroke:var(--accent-soft,#f5e9e4);stroke-width:12}
+.ft-workspace .wire.related .wire-halo {stroke:var(--accent-soft,#f5e9e4)}
+.ft-workspace .wire .waves, .ft-workspace .fronts, .ft-workspace .junction {pointer-events:none}
+.ft-workspace .pin.high, .ft-workspace .junction.high, .ft-workspace .front.high {fill:var(--high,#b76557)}
+.ft-workspace .pin.low, .ft-workspace .junction.low, .ft-workspace .front.low {fill:var(--low,#8d9596)}
+`;
 export const STYLE = `
-.ft-workspace .wire path {fill:none;stroke-linecap:round;stroke-linejoin:round}
-.ft-workspace .wire-halo {stroke:var(--bg,#f6f4ef);stroke-width:5}
-.ft-workspace .wire.bus .wire-base {stroke:var(--bus,#7d93a3);stroke-width:2.6}
-.ft-workspace .wire.bit .wire-base {stroke:var(--low,#9aa1a3);stroke-width:1.4}
-.ft-workspace .wire.bit.high .wire-base {stroke:var(--high,#c0503e)}
-.ft-workspace .wire.bus.changed .wire-base {stroke:var(--changed,#d4902a)}
-.ft-workspace .wire-hit {stroke:transparent;stroke-width:9;cursor:pointer}
-.ft-workspace .junction.bus {fill:var(--bus,#7d93a3)} .ft-workspace .junction.bit {fill:var(--low,#9aa1a3)}
+${WIRE_STYLE}
 .ft-workspace .module-box {fill:var(--panel,#fffdf8);stroke:var(--ink-2,#56616a);stroke-width:1.3}
 .ft-workspace .module-title {font:700 ${FONT.title}px ${MONO};fill:var(--ink,#1f2a30)}
 .ft-workspace .port-label {font:${FONT.port}px ${MONO};fill:var(--ink-3,#6a747a)}
 .ft-workspace .port-value {font:inherit;fill:var(--ink,#1f2a30);font-weight:600}
-.ft-workspace .pin.bus {fill:var(--bus,#7d93a3)} .ft-workspace .pin.bit {fill:var(--low,#9aa1a3)}
 .ft-workspace .view-row {font:${FONT.row}px ${MONO};fill:var(--ink,#1f2a30)}
 .ft-workspace .view-row.big {font-size:${FONT.big}px;font-weight:700}
 .ft-workspace .view-row.small {font-size:${FONT.small}px}
@@ -156,5 +180,5 @@ export const STYLE = `
 .ft-workspace .state-chip rect {fill:#ece8de;stroke:#b9b3a5} .ft-workspace .state-chip.on rect {fill:var(--accent,#1c6fb0);stroke:var(--accent,#1c6fb0)}
 .ft-workspace .state-chip text {font:${FONT.small}px ${MONO};fill:var(--ink-2,#56616a)} .ft-workspace .state-chip.on text {fill:#fff;font-weight:700}
 .ft-workspace .state-chip.next rect {stroke:var(--accent,#1c6fb0);stroke-width:2}
-.ft-workspace .front-label {font:700 ${FONT.front}px ${MONO};fill:#8a5410;paint-order:stroke;stroke:#fff;stroke-width:3px}
+.ft-workspace .front-label {font:700 ${FONT.front}px ${MONO};fill:var(--ink-2,#56616a);paint-order:stroke;stroke:var(--bg,#f6f4ef);stroke-width:3px}
 `;

@@ -15,6 +15,7 @@ import { MODE_NAMES } from '../sim/modules-pipeline.js';
 import { formatValue, flagsText, bin } from '../sim/format.js';
 import { CircuitView } from './circuit-view.js';
 import { inspectorHtml } from './inspector.js';
+import { InstructionCursor } from './instruction-cursor.js';
 
 /** @param {HTMLElement} root
  * @param {{ stageId: string, locale?: 'ja' | 'en', onProgramChange?: (id: string) => void }} config */
@@ -38,13 +39,14 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
     stage: null, program: null, assembled: null, sim: null, view: null,
     playing: false, stepMode: null, settledAt: null, selection: null,
     options: { hazardMode: 2, memLatency: 2, mainLatency: 4, memPorts: 1 },
-    history: [], lastSeq: -1,
+    history: [], undo: [], lastRenderKey: '', instructionCursor: null,
   };
   const isTd4 = () => app.stage.isa === 'td4';
+  const hasInstructionStep = () => app.stage.family === 'multi' || app.stage.family.startsWith('pipe');
 
   function init() {
     const params = new URLSearchParams(location.search);
-    app.view = new CircuitView($('circuit'), { onSelect: select });
+    app.view = new CircuitView($('circuit'), { onSelect: select, onBeforeExternal: saveUndo });
     const mode = Number(params.get('mode'));
     if ([0, 1, 2, 3].includes(mode) && params.has('mode')) app.options.hazardMode = mode;
     if (params.has('ports')) app.options.memPorts = Number(params.get('ports')) === 2 ? 2 : 1;
@@ -53,8 +55,9 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
     $('play').onclick = () => (app.playing ? pause() : play());
     $('step-cycle').onclick = () => step('cycle');
     $('step-instr').onclick = () => step('instr');
-    $('step-event').onclick = () => { pause(); if (app.sim.busy) app.sim.next(); else clockNow(); refresh(); };
-    $('step-time').onclick = () => { pause(); advance(1); refresh(); };
+    $('step-event').onclick = () => { pause(); saveUndo(); if (app.sim.busy) app.sim.next(); else clockNow(); refresh(); };
+    $('step-time').onclick = () => { pause(); saveUndo(); advance(1); refresh(); };
+    $('step-back').onclick = stepBack;
     $('reset').onclick = () => loadSim();
     $('fit').onclick = () => app.view.fit();
     $('zoom-in').onclick = () => app.view.zoom(0.7);
@@ -74,7 +77,7 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
       if (event.target.closest('textarea, select, input, button, a, summary')) return;
       if (event.key === ' ') { event.preventDefault(); app.playing ? pause() : play(); }
       if (event.key === 'c') step('cycle');
-      if (event.key === 'i') step('instr');
+      if (event.key === 'i' && hasInstructionStep()) step('instr');
       if (event.key === 'n') $('step-event').click();
     }, { signal: abort.signal });
     let last = performance.now();
@@ -97,7 +100,7 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
     renderOptions();
     const fitting = allPrograms.filter(p => programFits(stage, p));
     $('program-select').innerHTML = [t("機能を確認する実験"), t("サンプルプログラム")].map((label, i) => `<optgroup label="${label}">${fitting.filter(p => Boolean(p.stage) === !i).map(p => `<option value="${p.id}">${p.title}</option>`).join('')}</optgroup>`).join('') + t("<option value=\"custom\">(編集したプログラム)</option>");
-    const preferred = fitting.find(p => p.id === programId) ?? fitting.find(p => p.id === stage.defaultProgram) ?? fitting[0];
+    const preferred = fitting.find(p => p.id === programId) ?? fitting.find(p => p.stage === stage.id) ?? fitting.find(p => p.id === stage.defaultProgram) ?? fitting[0];
     app.view.view = null;
     const next = () => setProgram(programId === 'custom' ? 'custom' : preferred.id);
     if (isBuilt(stage.id)) { next(); return; }
@@ -185,10 +188,14 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
     generation++;
     $('compare').disabled = false;
     const circuit = buildStage(app.stage.id);
-    app.sim = new Simulator(circuit, { program: app.assembled, options: { ...app.options }, initialState: app.program.initialState ?? {} });
+    app.sim = new Simulator(circuit, { program: app.assembled, options: { ...app.options }, initialState: app.program.initialState ?? {}, settleOnReset: false });
     const sw = switchModule(app.sim);
     if (app.program.switches && sw) app.sim.setExternal(sw, 'sw', app.program.switches);
+    // Keep startup arrivals visible. The first cycle step only settles them;
+    // the listing shows propagation until that first settled boundary.
+    app.instructionCursor = new InstructionCursor(app.sim);
     app.history = [];
+    app.undo = [];
     app.settledAt = null;
     app.view.mount(app.sim);
     select(null);
@@ -199,8 +206,31 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
   }
 
   // ---- playback --------------------------------------------------------------
+  function saveUndo() {
+    const sim = app.sim;
+    const key = `${sim.emissionSeq}:${sim.time}:${sim.cycle}:${sim.busy}`;
+    if (app.undo.at(-1)?.key === key) return;
+    app.undo.push({ key, sim: sim.snapshot(), history: structuredClone(app.history), settledAt: app.settledAt });
+    if (app.undo.length > 50) app.undo.shift();
+    $('step-back').disabled = false;
+  }
+
+  function stepBack() {
+    pause();
+    const previous = app.undo.pop();
+    if (!previous) return;
+    app.sim.restore(previous.sim);
+    app.history = previous.history;
+    app.settledAt = previous.settledAt;
+    app.instructionCursor.update();
+    app.view.mount(app.sim);
+    select(app.selection);
+    refresh(true);
+  }
+
   function play() {
     if (cpuStopped(app.sim) && !app.sim.busy) return;
+    saveUndo();
     app.playing = true; app.stepMode = null;
     $('play').textContent = t("❚❚ 一時停止");
   }
@@ -210,15 +240,19 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
   }
   function step(kind) {
     if (cpuStopped(app.sim) && !app.sim.busy) return;
+    saveUndo();
     app.playing = true;
-    // From the middle of a cycle, finish the current one; otherwise run one more.
+    // Finish pending propagation without adding an edge. Only a step from
+    // a settled circuit sends the next clock.
     app.stepMode = { kind, cycle: app.sim.busy ? app.sim.cycle : app.sim.cycle + 1, retired: app.sim.retired };
     $('play').textContent = t("❚❚ 一時停止");
   }
 
   function clockNow() {
+    if (app.playing && !app.stepMode) saveUndo();
     recordHistory();
     app.sim.clock();
+    app.instructionCursor.update();
     app.settledAt = null;
   }
 
@@ -236,7 +270,7 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
       if (shouldStop()) { pause(); break; }
       const clockAt = app.settledAt + GAP;
       if (clockAt > target) { sim.advance(target - sim.time); break; }
-      sim.advance(clockAt - sim.time);
+      sim.advance(Math.max(0, clockAt - sim.time));
       clockNow();
     }
   }
@@ -269,16 +303,28 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
   // ---- rendering ---------------------------------------------------------------
   function refresh(force = false) {
     const sim = app.sim;
-    const changed = force || sim.emissionSeq !== app.lastSeq || sim.busy;
+    // A final input arrival need not emit another output. Still refresh on
+    // busy → settled so the listing, inspector and status finish together.
+    const key = `${sim.emissionSeq}:${sim.time}:${sim.cycle}:${sim.busy}`;
+    const changed = force || key !== app.lastRenderKey;
     app.view.render(changed);
     if (!changed && !force) return;
-    app.lastSeq = sim.emissionSeq;
+    app.lastRenderKey = key;
+    $('step-back').disabled = app.undo.length === 0;
+    $('step-instr').hidden = !hasInstructionStep();
+    $('step-cycle').textContent = sim.busy ? t("安定まで") : t("1クロック");
+    $('step-cycle').title = sim.busy ? t("クロックを送らず、現在の伝播が安定するまで進める") : t("クロックを1回送り、その結果の伝播が安定するまで進める");
     renderState();
     renderChart();
     highlightListing();
     if (app.selection) $('inspector').innerHTML = inspectorHtml(sim, app.selection, locale);
     const stopped = cpuStopped(sim) && !sim.busy;
     $('status').textContent = t("t = {0} · クロック {1} · 完了した命令 {2}{3}", sim.time.toFixed(1), sim.cycle, sim.retired, stopped ? t(" · 停止") : sim.busy ? t(" · 伝播中") : t(" · 安定"));
+    $('signal-phase').textContent = sim.busy
+      ? sim.cycle === 0
+        ? t("入力の変化が各端子へ伝播しています。レジスタはまだ取り込んでいません。")
+        : t("クロック {0} で到着済みの入力を取り込みました (t = {1})。現在は、その結果の信号が伝播しています。", sim.cycle, sim.clockTime.toFixed(1))
+      : stopped ? t("停止しました。") : t("入力が安定しました。次のクロックの立ち上がりでレジスタへ取り込みます。");
     for (const id of ['play', 'step-cycle', 'step-instr']) $(id).disabled = stopped;
   }
 
@@ -389,18 +435,20 @@ export function mountFt16(root, { stageId, onProgramChange = () => {}, locale = 
     }).join('');
   }
   function highlightListing() {
-    const tags = new Map();
-    for (const st of app.sim.circuit.inspect(app.sim).stages) {
-      if (st.valid === false || st.pc === null || st.pc === undefined) continue;
-      const pa = isTd4() ? st.pc : physicalPc(st.pc);
-      tags.set(pa, [...(tags.get(pa) ?? []), st.name]);
-    }
+    const tags = app.instructionCursor.update();
+    const propagating = app.instructionCursor.phase === 'propagating';
     for (const li of $('listing').children) {
-      const t = tags.get(Number(li.dataset.addr));
-      li.classList.toggle('active', !!t);
+      const names = tags.get(Number(li.dataset.addr));
+      li.classList.toggle('active', !!names);
+      li.classList.toggle('propagating', !!names && propagating);
+      li.classList.toggle('waiting', !!names && !propagating);
       let tag = li.querySelector('.tag');
-      if (t) { if (!tag) { tag = document.createElement('span'); tag.className = 'tag'; li.append(tag); } tag.textContent = t.join(' '); }
-      else tag?.remove();
+      if (names) {
+        if (!tag) { tag = document.createElement('span'); tag.className = 'tag'; li.append(tag); }
+        tag.textContent = ['td4', 'single'].includes(app.stage.family)
+          ? (propagating ? t("伝播中") : t("取り込み待ち"))
+          : (propagating ? t("{0} · 伝播中", names.join(' ')) : t("{0} · 取り込み待ち", names.join(' ')));
+      } else tag?.remove();
     }
   }
 

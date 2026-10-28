@@ -1,10 +1,11 @@
 <div class="ft-workspace" tabindex="0" aria-label="FT16 回路シミュレーター">
   <div class="ft-transport">
     <button id="play" type="button" class="primary">▶ 再生</button>
-    <button id="step-cycle" type="button" title="1クロック分の伝播を見て止まる">1クロック</button>
+    <button id="step-cycle" type="button" title="クロックを送らず、現在の伝播が安定するまで進める">安定まで</button>
     <button id="step-instr" type="button" title="命令が1つ完了するまで">1命令</button>
     <button id="step-event" type="button">次の変化</button>
     <button id="step-time" type="button">+1 t</button>
+    <button id="step-back" type="button" disabled title="直前の操作前へ戻る。連続再生はクロックごとに戻る（最大50段階）">戻る</button>
     <button id="reset" type="button">リセット</button>
     <label>速さ <select id="speed"><option value="5">5 t/秒</option><option value="15">15 t/秒</option><option value="40" selected>40 t/秒</option><option value="100">100 t/秒</option><option value="300">300 t/秒</option><option value="1000">1000 t/秒</option><option value="instant">瞬時</option></select></label>
   </div>
@@ -21,6 +22,7 @@
           <button id="apply-source" type="button">アセンブルしてリセット</button><ul id="asm-errors" class="errors" role="alert"></ul>
         </details>
         <h3 class="ft-subheading">命令一覧</h3><ol id="listing" class="listing"></ol>
+        <p class="note">次の取り込みに向けた命令を、伝播中は薄く、安定した「取り込み待ち」は濃く表示します。初期伝播中も薄く表示し、クロック後は新しいPC・各段の命令へ移ります。停止後は表示しません。</p>
       </section>
       <section class="card"><h2>CPUの状態</h2><div id="state"></div></section>
       <section class="card ft-options"><h2 id="stage-title" class="sr-only"></h2><p id="stage-summary" hidden></p><div id="stage-options" class="options"></div></section>
@@ -28,10 +30,12 @@
     <section class="canvas" aria-label="回路">
       <div class="toolbar"><button id="fit" type="button">全体</button><button id="zoom-in" type="button" aria-label="拡大">＋</button><button id="zoom-out" type="button" aria-label="縮小">−</button><label><input id="front-values" type="checkbox" checked> 伝播中の信号に値を表示</label><span id="status" class="status"></span></div>
       <svg id="circuit" role="group" tabindex="0" aria-label="回路図。モジュールや配線を選択すると詳しく表示します。"></svg>
-      <div class="legend"><span><i class="sw high"></i>H</span><span><i class="sw low"></i>L</span><span><i class="sw bus"></i>バス</span><span><i class="sw changed"></i>変化したバス</span><span><i class="dot"></i>伝播中の変化</span><span>ドラッグで移動・ホイールで拡大縮小</span></div>
+      <div class="legend"><span><i class="sw high"></i>H</span><span><i class="sw low"></i>L</span><span><i class="dot"></i>伝播中の変化</span><span>バスは各ビットをH/Lで表示</span><span>ドラッグで移動・ホイールで拡大縮小</span></div>
+      <p id="signal-phase" class="note"></p>
     </section>
   </div>
-  <p class="ft-time-note">t は観察用の時間単位。配線の長さに比例して伝播し、モジュール内部の遅延は0。実際の電気の速度や遅延を再現したものではありません。キーボード: 回路にフォーカスして Space / c / i / n。</p>
+  <p class="ft-time-note">MEMORY / ROM のハイライトは、番地入力に届いた読み出し位置です。レジスタ内の数値はクロックで取り込んだ保存値で、入力端子の数値とは区別します。</p>
+  <p class="ft-time-note">t は観察用の時間単位。配線の長さに比例して伝播し、モジュール内部の遅延は0。実際の電気の速度や遅延を再現したものではありません。キーボード: 回路にフォーカスして Space で再生・一時停止、c で安定まで・1クロック、n で次の変化。1命令がある段階では i も使えます。</p>
   <div class="ft-detail-grid">
     <section class="card ft-inspection" aria-label="選択した要素の詳細"><h2>くわしく見る <span>— 配線やモジュールを選択</span></h2><div id="inspector"></div></section>
     <section class="card"><h2 id="chart-title">実行の流れ</h2><div id="chart"></div></section>

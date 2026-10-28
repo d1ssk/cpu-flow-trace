@@ -1,38 +1,36 @@
 .ft-workspace .canvas-bg { fill: var(--bg); }
-.ft-workspace .wire path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
-.ft-workspace .wire-halo { stroke: var(--bg); stroke-width: 5; }
-.ft-workspace .wire.bus .wire-base { stroke: var(--bus); stroke-width: 2.6; }
-.ft-workspace .wire.bit .wire-base { stroke: var(--low); stroke-width: 1.4; }
-.ft-workspace .wire.bit.high .wire-base { stroke: var(--high); }
-.ft-workspace .wire.bus.changed .wire-base { stroke: var(--changed); }
-.ft-workspace .wave { fill: none; stroke-linecap: butt; }
-.ft-workspace .wave.bus { stroke: var(--changed); stroke-width: 3.2; }
-.ft-workspace .wave.high { stroke: var(--high); stroke-width: 1.9; }
-.ft-workspace .wave.low { stroke: #6f7779; stroke-width: 1.9; }
-.ft-workspace .wire-hit { stroke: transparent; stroke-width: 9; cursor: pointer; }
-.ft-workspace .wire.selected .wire-base { stroke: var(--accent) !important; stroke-width: 4; }
-.ft-workspace .wire.related .wire-base { stroke-width: 3.2; }
-.ft-workspace .wire.selected .wire-halo { stroke: var(--accent-soft); stroke-width: 9; }
-.ft-workspace .front.bus { fill: var(--changed); stroke: #fff; stroke-width: 1; }
-.ft-workspace .front.high { fill: var(--high); }
-.ft-workspace .front.low { fill: #6f7779; }
-.ft-workspace .junction.bus { fill: var(--bus); }
-.ft-workspace .junction.bit { fill: var(--low); }
 .ft-workspace .module { cursor: pointer; }
 .ft-workspace .module-box { fill: var(--panel); stroke: var(--ink-2); stroke-width: 1.3; }
 .ft-workspace .module.selected .module-box { stroke: var(--accent); stroke-width: 3; fill: #f5f9fd; }
 .ft-workspace .module.related .module-box { stroke: var(--accent); stroke-dasharray: 4 3; }
-.ft-workspace .pin.bus { fill: var(--bus); }
-.ft-workspace .pin.bit { fill: var(--low); }
 .ft-workspace .kv { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; font: 12.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 .ft-workspace .kv dt { color: var(--ink-3); }
 .ft-workspace .kv dd { margin: 0; }
+.ft-workspace .signal-value { display: inline-flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.ft-workspace .signal-bits { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; white-space: normal; }
+.ft-workspace .signal-nibble { display: inline-flex; gap: 1px; }
+.ft-workspace .signal-bit { display: inline-flex; flex-direction: column; align-items: center; width: 14px; font: 600 11px/1.4 var(--mono); }
+.ft-workspace .signal-bit small { color: var(--ink-3); font-size: 8px; font-weight: 400; }
+.ft-workspace .signal-bit.high { color: var(--high); }
+.ft-workspace .signal-bit.low { color: var(--low); }
+.ft-workspace .signal-hex { color: var(--ink-3); font-size: 10px; }
 .ft-workspace .regs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin: 6px 0; }
 .ft-workspace .regs div { background: #fff; border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: nowrap; overflow: hidden; }
 .ft-workspace .regs b { color: var(--ink-3); font-weight: 500; margin-right: 4px; }
 .ft-workspace .events { font-size: 12px; margin: 6px 0 0; padding-left: 16px; color: var(--ink-2); }
 .ft-workspace .insp h3 { margin: 0 0 4px; font-size: 14px; }
 .ft-workspace .insp .type { color: var(--ink-3); font-size: 12px; margin-bottom: 6px; }
+.ft-workspace .insp h4 { margin: 16px 0 5px; font-size: 12px; font-weight: 600; }
+.ft-workspace .module-guide { font-size: 12.5px; line-height: 1.85; overflow-wrap: anywhere; }
+.ft-workspace .module-guide section { border-left: 2px solid var(--line); padding-left: 12px; }
+.ft-workspace .module-guide p { margin: 5px 0 8px; }
+.ft-workspace .guide-ports { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 8px 0 12px; }
+.ft-workspace .guide-ports code { background: var(--cell); padding: 1px 5px; font: 11px/1.7 var(--mono); }
+.ft-workspace .guide-ports small { color: var(--ink-3); font-size: 9px; }
+.ft-workspace .guide-definitions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 12px; margin: 8px 0; font-size: 11.5px; }
+.ft-workspace .guide-definitions dt { align-self: start; }
+.ft-workspace .guide-definitions dd { margin: 0; }
+.ft-workspace .insp .live-heading { border-top: 1px solid var(--line); padding-top: 14px; }
 .ft-workspace .insp ul { padding-left: 16px; margin: 4px 0 8px; font-size: 12.5px; }
 .ft-workspace .insp table { width: 100%; border-collapse: collapse; font: 11.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin-top: 4px; }
 .ft-workspace .insp td { border-top: 1px solid var(--line); padding: 2px 4px; }
@@ -46,10 +44,15 @@
 .ft-workspace .chart td.stall { background: #fdf0d8; }
 .ft-workspace .chart td.flush { background: #f8dcd6; }
 .ft-workspace .listing { font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding-left: 0; margin: 0; list-style: none; max-height: 320px; overflow-y: auto; }
+/* One shared column spans the longest complete line, including comments and
+ * the phase badge. Horizontal scrolling must not leave text outside its row. */
+.ft-workspace .listing { display: grid; grid-template-columns: minmax(max-content, 1fr); }
 .ft-workspace .listing li { padding: 0 4px; border-radius: 3px; white-space: pre; display: flex; gap: 6px; }
 .ft-workspace .listing li .addr { color: var(--ink-3); }
 .ft-workspace .listing li .tag { margin-left: auto; font-size: 10px; color: #fff; background: var(--accent); border-radius: 3px; padding: 0 4px; }
 .ft-workspace .listing li.active { background: var(--accent-soft); }
+.ft-workspace .listing li.active.propagating { background: color-mix(in srgb, var(--accent-soft) 40%, transparent); }
+.ft-workspace .listing li.propagating .tag { color: var(--accent); background: var(--accent-soft); }
 .ft-workspace .compare { width: 100%; border-collapse: collapse; font: 11.5px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; margin-top: 6px; }
 .ft-workspace .compare th, .ft-workspace .compare td { border-top: 1px solid var(--line); padding: 3px 4px; text-align: right; }
 .ft-workspace .compare th:first-child, .ft-workspace .compare td:first-child { text-align: left; }
