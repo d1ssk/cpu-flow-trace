@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocale } from '../../i18n';
 import { ProgramPanel } from '../../pages/home/ProgramPanel';
-import { CpuProvider, useCpuSnapshot } from './context';
+import { CpuProvider, useCpu, useCpuSnapshot } from './context';
 import { CpuControls } from './Controls';
 import { CpuCanvas } from './Canvas';
 import { cpuMessages } from './messages';
@@ -27,9 +27,17 @@ function Workspace() {
   </section>;
 }
 function StateReadout() {
-  const state = useCpuSnapshot();
+  const session = useCpu(), state = useCpuSnapshot();
+  const { locale } = useLocale(); const m = cpuMessages(locale);
+  const inputLocked = state.mode === 'paused' && !!session.sim?.clockActive;
+  const pendingInput = state.mode === 'paused' && state.busy && state.cycles === 0 && !session.sim?.clockActive;
   return <div className="td4-registers" aria-label="CPU state">
-    <span>INPUT <output data-testid="input-word">{binary(state.input, 4)}</output></span>
+    <span className="td4-input-readout">INPUT <output data-testid="input-word">{binary(state.input, 4)}</output>
+      <span className="td4-input-hint" role="status">
+        {pendingInput && <span>{m.pendingInput}</span>}
+        <span id="td4-input-locked" hidden={!inputLocked}>{m.inputLocked}</span>
+      </span>
+    </span>
     {Object.entries(state.registers).map(([key, value]) => <span key={key}>{key === 'carry' ? 'C' : key.toUpperCase()} <output>{binary(value, key === 'carry' ? 1 : 4)}</output></span>)}
     <span>OUTPUT <output data-testid="output-word">{binary(state.output, 4)}</output></span>
   </div>;

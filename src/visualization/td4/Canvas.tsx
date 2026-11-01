@@ -6,10 +6,14 @@ import { useCpu, useCpuSnapshot } from './context';
 import { drawCpu } from './cpu-view.js';
 import { pick, inspectCpu, type Selection } from './inspection';
 import { cpuMessages } from './messages';
+import { CpuStatus } from './Controls';
 
 export function CpuCanvas({ children, aside }: { children?: ReactNode; aside?: ReactNode }) {
   const session = useCpu(); const { locale, t } = useLocale(); const m = cpuMessages(locale);
   const svgRef = useRef<SVGSVGElement>(null), scrollRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null), readoutRef = useRef<HTMLDivElement>(null);
+  const [fit, setFit] = useState<'circuit' | 'width'>('circuit');
+  const [viewportHeight, setViewportHeight] = useState<number>();
   const renderer = useRef<ReturnType<typeof drawCpu> | null>(null);
   const [zoom, setZoom] = useState(1), [width, setWidth] = useState(640);
   const [selected, setSelected] = useState<Selection | null>(null), [error, setError] = useState('');
@@ -18,15 +22,22 @@ export function CpuCanvas({ children, aside }: { children?: ReactNode; aside?: R
     function resize() {
       const style = getComputedStyle(scroll);
       const availableWidth = scroll.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-      const height = Math.max(280, Math.min(740, innerHeight - scroll.getBoundingClientRect().top - 150));
-      // On mobile, use the available width; taller circuits remain locally scrollable.
-      const fitWidth = window.matchMedia('(max-width: 900px)').matches
+      const paddingY = parseFloat(style.paddingTop) + parseFloat(style.paddingBottom);
+      // Use document coordinates so scrolling the page never changes the fit scale.
+      const top = scroll.getBoundingClientRect().top + window.scrollY;
+      const bottom = footerRef.current!.offsetHeight + readoutRef.current!.offsetHeight;
+      const height = Math.max(280, innerHeight - top - bottom - paddingY);
+      const mobile = window.matchMedia('(max-width: 900px)').matches;
+      setViewportHeight(mobile ? undefined : height + paddingY);
+      const fitWidth = mobile || fit === 'width'
         ? availableWidth : Math.min(availableWidth, height * 1184 / 750);
       setWidth(Math.max(220, fitWidth));
     }
-    const observer = new ResizeObserver(resize); observer.observe(scroll); window.addEventListener('resize', resize); resize();
+    const observer = new ResizeObserver(resize);
+    for (const element of [scroll, footerRef.current!, readoutRef.current!, scroll.parentElement!, document.body]) observer.observe(element);
+    window.addEventListener('resize', resize); resize();
     return () => { observer.disconnect(); window.removeEventListener('resize', resize); };
-  }, []);
+  }, [fit]);
   useEffect(() => {
     let revision = -1;
     function update() {
@@ -54,7 +65,7 @@ export function CpuCanvas({ children, aside }: { children?: ReactNode; aside?: R
     setSelected(current => JSON.stringify(current) === JSON.stringify(next) ? null : next);
   }
   return <>
-    <div className="td4-scroll" ref={scrollRef} data-testid="circuit-scroll" tabIndex={0} aria-label={locale === 'ja' ? 'TD4回路図。拡大時はスクロールできます' : 'TD4 circuit. Scroll to explore when zoomed in'}>
+    <div className="td4-scroll" ref={scrollRef} style={{ maxHeight: fit === 'width' ? 'none' : viewportHeight }} data-testid="circuit-scroll" tabIndex={0} aria-label={locale === 'ja' ? 'TD4回路図。拡大時はスクロールできます' : 'TD4 circuit. Scroll to explore when zoomed in'}>
       <svg ref={svgRef} className="td4-svg circuit-svg" style={{ width: width * zoom }} viewBox="-32 0 1184 750" role="group" aria-label="TD4 CPU"
         onClick={e => activate(e.target)} onKeyDown={e => {
           if (['Enter', ' '].includes(e.key) && (e.target as Element).closest('[role="button"]')) { e.preventDefault(); activate(e.target); }
@@ -62,16 +73,17 @@ export function CpuCanvas({ children, aside }: { children?: ReactNode; aside?: R
         }} />
     </div>
     {error && <p role="alert">{error}</p>}
-    <div className="td4-canvas-footer">
-      <span>{locale === 'ja' ? '4 bit · 左からbit 3 → 0' : '4 bit · Left to right: bit 3 → 0'}</span>
+    <div className="td4-canvas-footer" ref={footerRef}>
+      <CpuStatus />
       <div className="zoom-controls">
         <button aria-label={t.zoomOut} disabled={zoom <= 1} onClick={() => setZoom(Math.max(1, zoom - .5))}>−</button>
-        <button aria-label={m.fit} onClick={() => { setZoom(1); scrollRef.current?.scrollTo(0, 0); }}>{m.fit}</button>
+        <button aria-label={m.fit} aria-pressed={fit === 'circuit' && zoom === 1} onClick={() => { setFit('circuit'); setZoom(1); scrollRef.current?.scrollTo(0, 0); }}>{m.fit}</button>
+        <button aria-label={m.fitWidth} aria-pressed={fit === 'width' && zoom === 1} onClick={() => { setFit('width'); setZoom(1); scrollRef.current?.scrollTo(0, 0); }}>{m.fitWidth}</button>
         <button aria-label={t.zoomIn} disabled={zoom >= 12} onClick={() => setZoom(Math.min(12, zoom + .5))}>＋</button>
         <output aria-label={locale === 'ja' ? '表示倍率' : 'Zoom'}>{Math.round(zoom * 100)}%</output>
       </div>
     </div>
-    <div className="td4-canvas-readout">
+    <div className="td4-canvas-readout" ref={readoutRef}>
       <div><CpuInspector selected={selected} />{children}</div>
       {aside}
     </div>
