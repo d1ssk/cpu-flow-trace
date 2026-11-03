@@ -78,6 +78,14 @@ SITE_BASE=/cpu-flow-trace/ npm run preview
 
 Article routes are generated automatically from `src/articles/index.ts`. Add other page routes to `scripts/static-routes.mjs` when needed.
 
+The build also embeds Open Graph and X card metadata in every static entry,
+with localized descriptions and an absolute URL for each route. The shared
+thumbnail is `public/og-image.png` (1200 × 630 PNG), resized from the supplied
+CPU circuit screenshot without cropping, with background padding on the sides.
+`SITE_URL` sets the full public site root, including any subdirectory; it defaults
+to `https://d1ssk.github.io/cpu-flow-trace/`. Set it when building for another host.
+The GitHub Pages workflow supplies it from the Pages configuration automatically.
+
 The build command produces a local artifact. The GitHub Actions workflow in
 `.github/workflows/pages.yml` checks generated circuits, runs the tests, builds
 the site, and publishes `dist/` to GitHub Pages on every push to `main`. It can
